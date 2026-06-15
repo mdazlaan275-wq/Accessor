@@ -423,8 +423,6 @@
       userHeaderAvatar.src = user.photoURL || 'https://api.dicebear.com/7.x/bottts/svg?seed=fallback';
       userHeaderName.innerText = user.displayName || user.email.split('@')[0];
       
-      // Note: Removed the Realtime DB /users log here entirely for security as requested.
-      
       loginScreen.classList.add("hidden");
       chatScreen.classList.remove("hidden");
       
@@ -484,10 +482,22 @@
     const sanitizedFileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
 
     try {
-      const { error } = await supabaseClient.storage.from('photos').upload(sanitizedFileName, file);
+      // 1. Updated target bucket to 'new_photos' and added 'upsert: true' configuration rule
+      const { data, error } = await supabaseClient.storage
+        .from('new_photos')
+        .upload(sanitizedFileName, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+        
       if (error) throw error;
 
-      const publicAssetUrl = `${SUPABASE_URL}/storage/v1/object/public/photos/${sanitizedFileName}`;
+      // 2. Updated asset retrieval logic to explicitly query 'new_photos' bucket configuration via SDK
+      const { data: publicUrlData } = supabaseClient.storage
+        .from('new_photos')
+        .getPublicUrl(sanitizedFileName);
+
+      const publicAssetUrl = publicUrlData.publicUrl;
 
       await push(ref(db, 'messages'), {
         uid: localUserReference.uid,
@@ -516,7 +526,6 @@
     const row = document.createElement('div');
     row.className = `msg-row ${directionClass}`;
 
-    // Profile picture block used for BOTH sender and receiver now
     const avatarTemplate = `
       <div class="avatar-space">
         <img src="${msg.senderPhoto || fallbackUrl}" alt="Profile" onerror="this.src='${fallbackUrl}'">
@@ -539,7 +548,6 @@
 
     const standardTimeSignature = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    // Build the UI based on who sent it to position the avatar properly
     const bubbleContent = `
       <div class="bubble">
         <span class="msg-meta-name">${msg.senderName.split('@')[0]}</span>
