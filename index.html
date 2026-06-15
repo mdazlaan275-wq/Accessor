@@ -3,55 +3,433 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Accessor</title>
+<title>Accessor - Secure Chat</title>
 <style>
-body {background:#080808;color:white;font-family:Arial,sans-serif;min-height:100vh;margin:0;padding:0;}
-.topbar {width:100%;padding:18px;text-align:center;font-size:28px;font-weight:bold;letter-spacing:5px;
-  background:linear-gradient(90deg,#111,#2b0000,#111);border-bottom:2px solid red;
-  box-shadow:0 0 20px rgba(255,0,0,0.6);}
-.status {text-align:center;padding:12px;color:#ff9500;font-size:14px;}
-#loginBtn {display:block;margin:40px auto;padding:14px 28px;font-size:18px;font-weight:bold;color:white;
-  background:linear-gradient(135deg,#ff0000,#ff7300);border:none;border-radius:8px;cursor:pointer;
-  box-shadow:0 0 20px rgba(255,70,0,0.9);transition:transform 0.2s ease;}
-#loginBtn:hover {transform:scale(1.05);}
-.hidden {display:none;}
-.gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:14px;}
-.card{background:#111;border:2px solid #ff2d2d;border-radius:18px;overflow:hidden;
-  box-shadow:0 0 12px rgba(255,0,0,0.5);}
-.card img{width:100%;height:220px;object-fit:cover;display:block;}
-.fire{height:4px;background:linear-gradient(90deg,red,orange,yellow,red);
-  background-size:300% 100%;animation:fire 2s linear infinite;}
-@keyframes fire{0%{background-position:0% 50%;}100%{background-position:100% 50%;}}
+  :root {
+    --bg-main: #060606;
+    --bg-panel: #111111;
+    --accent-red: #ff2d2d;
+    --accent-orange: #ff9500;
+    --text-light: #eeeeee;
+    --bubble-me: #2b0808;
+    --bubble-them: #1c1c1c;
+  }
 
-/* Styling for the hidden section buttons & inputs */
-#mainContent { text-align: center; padding: 20px; }
-#mainContent button { padding: 10px 20px; background: #ff2d2d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-bottom: 20px;}
-#fileInput { display: block; margin: 10px auto; color: white; }
+  body {
+    background: var(--bg-main);
+    color: var(--text-light);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Utilities */
+  .hidden { display: none !important; }
+
+  /* Login Screen Setup */
+  #loginScreen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: radial-gradient(circle at center, #1a0303 0%, #060606 100%);
+  }
+
+  .login-card {
+    background: var(--bg-panel);
+    border: 2px solid var(--accent-red);
+    border-radius: 20px;
+    padding: 40px;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(255, 45, 45, 0.4);
+    max-width: 400px;
+    width: 85%;
+  }
+
+  .login-card h1 {
+    font-size: 32px;
+    letter-spacing: 6px;
+    margin-bottom: 10px;
+    color: white;
+    text-shadow: 0 0 10px rgba(255, 45, 45, 0.6);
+  }
+
+  .login-card p {
+    color: #888;
+    font-size: 14px;
+    margin-bottom: 30px;
+  }
+
+  #loginBtn {
+    padding: 14px 32px;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    background: linear-gradient(135deg, var(--accent-red), #ff7300);
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    box-shadow: 0 0 20px rgba(255, 70, 0, 0.6);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  #loginBtn:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 25px rgba(255, 70, 0, 0.9);
+  }
+
+  /* Main WhatsApp Architecture Workspace */
+  #chatScreen {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  /* Top App Navigation Header Bar */
+  .chat-header {
+    background: var(--bg-panel);
+    border-bottom: 2px solid var(--accent-red);
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    z-index: 10;
+    height: 50px;
+  }
+
+  .brand-meta {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .brand-logo {
+    font-weight: 900;
+    font-size: 22px;
+    letter-spacing: 3px;
+    color: white;
+    text-shadow: 0 0 8px var(--accent-red);
+  }
+
+  .current-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #00000040;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid #333;
+  }
+
+  .current-profile img {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid var(--accent-orange);
+  }
+
+  .current-profile span {
+    font-size: 13px;
+    color: var(--accent-orange);
+    font-weight: 600;
+  }
+
+  .logout-btn {
+    background: transparent;
+    border: 1px solid #444;
+    color: #aaa;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+  }
+  .logout-btn:hover {
+    border-color: var(--accent-red);
+    color: white;
+    background: #ff2d2d1a;
+  }
+
+  /* Messaging Log Window */
+  .chat-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background: 
+      linear-gradient(rgba(6, 6, 6, 0.94), rgba(6, 6, 6, 0.94)),
+      url('https://i.imgur.com/8N693aX.png'); /* Subtle abstract pattern backdrop */
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  /* Message Bubble Component Engine */
+  .msg-row {
+    display: flex;
+    width: 100%;
+    align-items: flex-end;
+    gap: 10px;
+  }
+
+  .msg-row.me {
+    justify-content: flex-end;
+  }
+
+  .msg-row.them {
+    justify-content: flex-start;
+  }
+
+  .avatar-space {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+  }
+
+  .avatar-space img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 0 8px rgba(0,0,0,0.5);
+  }
+
+  .bubble {
+    max-width: 65%;
+    padding: 10px 14px;
+    border-radius: 16px;
+    position: relative;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    word-break: break-word;
+  }
+
+  .me .bubble {
+    background: var(--bubble-me);
+    border: 1px solid #ff2d2d40;
+    border-bottom-right-radius: 2px;
+    color: #f5f5f5;
+  }
+
+  .them .bubble {
+    background: var(--bubble-them);
+    border: 1px solid #333;
+    border-bottom-left-radius: 2px;
+    color: #e0e0e0;
+  }
+
+  .msg-meta-name {
+    font-size: 11px;
+    font-weight: bold;
+    margin-bottom: 4px;
+    display: block;
+  }
+  .me .msg-meta-name { color: var(--accent-orange); }
+  .them .msg-meta-name { color: #00adb5; }
+
+  .msg-text {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  /* File Attachments Inside Bubbles */
+  .msg-media {
+    margin-top: 6px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #00000030;
+    border: 1px solid #444;
+  }
+
+  .msg-media img {
+    max-width: 100%;
+    max-height: 250px;
+    display: block;
+    object-fit: contain;
+  }
+
+  .doc-file-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    text-decoration: none;
+    color: white;
+    background: rgba(0, 0, 0, 0.4);
+  }
+  
+  .doc-icon {
+    font-size: 24px;
+    line-height: 1;
+  }
+
+  .doc-details {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .doc-name {
+    font-size: 13px;
+    font-weight: bold;
+    max-width: 180px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .doc-download-lbl {
+    font-size: 11px;
+    color: var(--accent-orange);
+    margin-top: 2px;
+  }
+
+  .msg-timestamp {
+    font-size: 9px;
+    color: #666;
+    text-align: right;
+    margin-top: 4px;
+    display: block;
+  }
+
+  /* Bottom Input Controller Bar */
+  .chat-footer {
+    background: var(--bg-panel);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-top: 1px solid #222;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.4);
+  }
+
+  .attach-btn-label {
+    width: 42px;
+    height: 42px;
+    background: #1f1f1f;
+    border: 1px solid #333;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--accent-red);
+    box-sizing: border-box;
+  }
+  .attach-btn-label:hover {
+    background: #2a1010;
+    border-color: var(--accent-red);
+    transform: rotate(90deg);
+  }
+  .attach-btn-label span {
+    font-size: 28px;
+    font-weight: 300;
+    line-height: 1;
+    margin-top: -2px;
+  }
+
+  .input-wrapper {
+    flex: 1;
+    position: relative;
+  }
+
+  #chatTextInput {
+    width: 100%;
+    background: #161616;
+    border: 1px solid #333;
+    color: white;
+    padding: 12px 16px;
+    border-radius: 24px;
+    font-size: 14px;
+    box-sizing: border-box;
+    transition: border 0.2s;
+  }
+  #chatTextInput:focus {
+    border-color: var(--accent-red);
+    outline: none;
+    box-shadow: 0 0 10px rgba(255,45,45,0.2);
+  }
+
+  #sendBtn {
+    background: linear-gradient(135deg, var(--accent-red), #b30000);
+    color: white;
+    border: none;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(255,0,0,0.3);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+  #sendBtn:hover {
+    transform: scale(1.05);
+  }
+  #sendBtn svg {
+    width: 18px;
+    height: 18px;
+    fill: white;
+    margin-left: 2px;
+  }
 </style>
 </head>
 <body>
 
-<div class="topbar">ACCESSOR</div>
-<div class="status" id="status">Please login first</div>
-
-<div id="loginSection">
-  <button id="loginBtn">Login with Google</button>
+<div id="loginScreen" class="hidden">
+  <div class="login-card">
+    <h1>ACCESSOR</h1>
+    <p>Secure Peer-to-Peer Transmission Interface</p>
+    <button id="loginBtn">Sign In With Google</button>
+  </div>
 </div>
 
-<div id="mainContent" class="hidden">
-  <button onclick="downloadAll()">DOWNLOAD ALL OFFLINE</button>
-  <input type="file" id="fileInput" multiple accept="image/*">
-  <div class="gallery" id="gallery"></div>
-</div>
+<div id="chatScreen" class="hidden">
+  <header class="chat-header">
+    <div class="brand-meta">
+      <div class="brand-logo">ACCESSOR</div>
+      <div class="current-profile">
+        <img id="userHeaderAvatar" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="User Avatar">
+        <span id="userHeaderName">...</span>
+      </div>
+    </div>
+    <button class="logout-btn" id="logoutBtn">Disconnect</button>
+  </header>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <main class="chat-body" id="chatDisplayPanel"></main>
+
+  <footer class="chat-footer">
+    <label for="fileAttachmentInput" class="attach-btn-label" title="Attach Media or Documents">
+      <span>+</span>
+    </label>
+    <input type="file" id="fileAttachmentInput" style="display: none;">
+    
+    <div class="input-wrapper">
+      <input type="text" id="chatTextInput" placeholder="Type a secure message...">
+    </div>
+    
+    <button id="sendBtn" title="Transmit Message">
+      <svg viewBox="0 0 24 24"><path d="M2,21L23,12L2,3V10L17,12L2,14V21Z"/></svg>
+    </button>
+  </footer>
+</div>
 
 <script type="module">
+  // Modular Google Firebase Platform SDK Implementations
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
-  import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+  import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
+  
+  // Supabase Architecture Client Node Integration Module
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-  // Firebase config
+  // System Credentials Block Configuration Matrix
   const firebaseConfig = {
     apiKey: "AIzaSyBa4VeqtkTiG1DBcT8bb9mrFMoeJtfTfcU",
     authDomain: "project1-a8022.firebaseapp.com",
@@ -63,133 +441,240 @@ body {background:#080808;color:white;font-family:Arial,sans-serif;min-height:100
     measurementId: "G-WWSZV54BBK"
   };
 
+  const SUPABASE_URL = "https://viwxoslxgwdchrpnuyze.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_LxlDxG5gLAaYLBpnsZD-Yw_Km4_P0MW";
+
+  // Framework Instance Spawning Handlers
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getDatabase(app);
   const provider = new GoogleAuthProvider();
+  const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  // Supabase config
-  const SUPABASE_URL = "https://viwxoslxgwdchrpnuyze.supabase.co";
-  const SUPABASE_KEY = "sb_publishable_LxlDxG5gLAaYLBpnsZD-Yw_Km4_P0MW";
-  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-  // Elements
+  // Document Object Model Element Mapping Links
+  const loginScreen = document.getElementById("loginScreen");
+  const chatScreen = document.getElementById("chatScreen");
   const loginBtn = document.getElementById("loginBtn");
-  const statusText = document.getElementById("status");
-  const loginSection = document.getElementById("loginSection");
-  const mainContent = document.getElementById("mainContent");
-  const gallery = document.getElementById("gallery");
-  const fileInput = document.getElementById("fileInput");
+  const logoutBtn = document.getElementById("logoutBtn");
+  const chatDisplayPanel = document.getElementById("chatDisplayPanel");
+  const chatTextInput = document.getElementById("chatTextInput");
+  const sendBtn = document.getElementById("sendBtn");
+  const fileAttachmentInput = document.getElementById("fileAttachmentInput");
+  const userHeaderAvatar = document.getElementById("userHeaderAvatar");
+  const userHeaderName = document.getElementById("userHeaderName");
 
-  // Login button click
-  loginBtn.addEventListener("click", async () => {
-    try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
+  let localUserReference = null;
+  let systematicChatInitialized = false;
 
-      // Save user info in Realtime Database
-      await set(ref(db, 'users/' + user.uid), {
-        name: user.displayName,
-        email: user.email,
-        photo: user.photoURL,
-        lastLogin: new Date().toISOString()
-      });
-
-      statusText.innerText = "Welcome " + user.email;
-      loginSection.classList.add("hidden");
-      mainContent.classList.remove("hidden");
-
-      loadPhotos();
-    } catch (error) {
-      console.error("Login failed:", error.code, error.message);
-      statusText.innerText = "Login failed: " + error.message;
+  /**
+   * Continuous Authorization State persistence Observer Core Loop
+   * Validates if authorization token cookies/local storage exist on boot.
+   */
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      // User context is verified or already logged in; directly route to workspace dashboard.
+      localUserReference = user;
+      userHeaderAvatar.src = user.photoURL || 'https://api.dicebear.com/7.x/bottts/svg?seed=fallback';
+      userHeaderName.innerText = user.displayName || user.email.split('@')[0];
+      
+      loginScreen.classList.add("hidden");
+      chatScreen.classList.remove("hidden");
+      
+      if (!systematicChatInitialized) {
+        bootChatEnginePipeline();
+      }
+    } else {
+      // Missing verified context tokens; explicitly enforce the authentication wall.
+      localUserReference = null;
+      chatScreen.classList.add("hidden");
+      loginScreen.classList.remove("hidden");
     }
   });
 
-  // Load Photos from Supabase
-  async function loadPhotos(){
-    gallery.innerHTML = '';
-    statusText.innerText = 'Loading photos...';
-    
-    const { data, error } = await supabaseClient.storage.from('photos').list('', {
-      limit: 100, sortBy: { column: 'created_at', order: 'desc' }
+  // Action Triggers binding
+  loginBtn.addEventListener("click", async () => {
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (err) {
+      console.error("Google Authenticator Portal crashed:", err);
+      alert("Authentication Failed: " + err.message);
+    }
+  });
+
+  logoutBtn.addEventListener("click", async () => {
+    if(confirm("Terminate your secure session connection?")) {
+      try {
+        await signOut(auth);
+        window.location.reload();
+      } catch(err) {
+        console.error("Session teardown error:", err);
+      }
+    }
+  });
+
+  /**
+   * Primary Chat Operational Control Loop Logic
+   */
+  function bootChatEnginePipeline() {
+    systematicChatInitialized = true;
+
+    // Synchronize and render Incoming Realtime Message Elements from cloud reference
+    onChildAdded(ref(db, 'messages'), (snapshot) => {
+      const msg = snapshot.val();
+      if (!msg) return;
+      
+      renderMessageBubble(msg);
     });
+
+    // Send click trigger event handler
+    sendBtn.onclick = executeTextTransmission;
     
-    if (error) {
-      console.error("Supabase load error:", error);
-      statusText.innerText = 'Error loading photos';
-      return;
-    }
-    
-    if (!data || data.length === 0) {
-      statusText.innerText = 'No photos uploaded';
-      return;
-    }
-    
-    statusText.innerText = data.length + ' photos loaded';
-    
-    for (const item of data) {
-      const imageUrl = `${SUPABASE_URL}/storage/v1/object/public/photos/${item.name}`;
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.innerHTML = `<img src="${imageUrl}" loading="lazy"><div class="fire"></div>`;
-      gallery.appendChild(card);
+    // Send keyboard Enter key capture loop event handler
+    chatTextInput.onkeypress = (e) => {
+      if (e.key === 'Enter') executeTextTransmission();
+    };
+
+    // Document & Image Attachment Input change interceptor listener
+    fileAttachmentInput.addEventListener("change", executeFileAttachmentUpload);
+  }
+
+  /**
+   * Text Transaction Pipeline execution module
+   */
+  async function executeTextTransmission() {
+    const textPayload = chatTextInput.value.trim();
+    if (!textPayload || !localUserReference) return;
+
+    chatTextInput.value = ''; // Instantly clear UI input buffer frame
+    chatTextInput.placeholder = "Sending message...";
+
+    try {
+      await push(ref(db, 'messages'), {
+        uid: localUserReference.uid,
+        senderName: localUserReference.displayName || localUserReference.email,
+        senderPhoto: localUserReference.photoURL || '',
+        text: textPayload,
+        timestamp: Date.now()
+      });
+    } catch (err) {
+      console.error("Database sync fault encountered:", err);
+    } finally {
+      chatTextInput.placeholder = "Type a secure message...";
     }
   }
 
-  // Upload Photo handler
-  fileInput.addEventListener('change', async (e) => {
-    const files = e.target.files;
-    if (!files.length) return;
+  /**
+   * Supabase Storage File Multi-type Upload and Routing Pipeline Execution Unit
+   */
+  async function executeFileAttachmentUpload(e) {
+    const structuralFile = e.target.files[0];
+    if (!structuralFile || !localUserReference) return;
+
+    const originalInputPlaceholder = chatTextInput.placeholder;
+    chatTextInput.disabled = true;
+    chatTextInput.placeholder = `Uploading structural asset: ${structuralFile.name}...`;
+
+    // Generate unique internal namespace signature identifiers
+    const sanitizedFileName = `${Date.now()}_${structuralFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
+
+    try {
+      // Stream payload pipeline target endpoint assignment to Supabase bucket
+      const { data, error } = await supabaseClient.storage
+        .from('photos')
+        .upload(sanitizedFileName, structuralFile, { cacheControl: '3600', upsert: false });
+
+      if (error) throw error;
+
+      // Unpack global address locator endpoint pointer reference assets
+      const publicAssetUrl = `${SUPABASE_URL}/storage/v1/object/public/photos/${sanitizedFileName}`;
+
+      // Package file properties payload and register pointer link within Firebase Chat Stream
+      await push(ref(db, 'messages'), {
+        uid: localUserReference.uid,
+        senderName: localUserReference.displayName || localUserReference.email,
+        senderPhoto: localUserReference.photoURL || '',
+        text: `Shared a file attachment`,
+        fileUrl: publicAssetUrl,
+        fileName: structuralFile.name,
+        fileType: structuralFile.type,
+        timestamp: Date.now()
+      });
+
+    } catch (err) {
+      console.error("Attachment upload intercept system failed:", err);
+      alert("Asset pipeline sync failed to deliver: " + err.message);
+    } finally {
+      fileAttachmentInput.value = ''; // Flush selected cache data pointer
+      chatTextInput.disabled = false;
+      chatTextInput.placeholder = originalInputPlaceholder;
+      chatTextInput.focus();
+    }
+  }
+
+  /**
+   * Visual Dynamic HTML Engine Builder Rendering Layer
+   */
+  function renderMessageBubble(msg) {
+    const directionClass = (msg.uid === localUserReference?.uid) ? 'me' : 'them';
     
-    statusText.innerText = 'Uploading photos...';
-    
-    for (const file of files) {
-      const fileName = Date.now() + '_' + file.name;
-      const { error } = await supabaseClient.storage.from('photos').upload(fileName, file);
-      if (error) {
-        console.error("Upload failed for:", file.name, error);
+    const row = document.createElement('div');
+    row.className = `msg-row ${directionClass}`;
+
+    // Left alignment handling constraint for incoming remote user profiles
+    let avatarTemplate = '';
+    if (directionClass === 'them') {
+      const fallbackUrl = 'https://api.dicebear.com/7.x/identicon/svg?seed=' + encodeURIComponent(msg.senderName);
+      avatarTemplate = `
+        <div class="avatar-space">
+          <img src="${msg.senderPhoto || fallbackUrl}" alt="Profile" onerror="this.src='${fallbackUrl}'">
+        </div>`;
+    }
+
+    // Attachment asset payload content mapping evaluation check
+    let attachmentTemplate = '';
+    if (msg.fileUrl) {
+      if (msg.fileType && msg.fileType.startsWith('image/')) {
+        // Image element payload type wrapper card visualization logic
+        attachmentTemplate = `
+          <div class="msg-media">
+            <a href="${msg.fileUrl}" target="_blank">
+              <img src="${msg.fileUrl}" alt="Shared Image Asset" loading="lazy">
+            </a>
+          </div>`;
+      } else {
+        // Standard non-image document variant file system link download structure card layout
+        attachmentTemplate = `
+          <div class="msg-media">
+            <a href="${msg.fileUrl}" target="_blank" class="doc-file-card" download="${msg.fileName}">
+              <div class="doc-icon">📁</div>
+              <div class="doc-details">
+                <span class="doc-name">${msg.fileName || 'Download Asset Document'}</span>
+                <span class="doc-download-lbl">Click to download file</span>
+              </div>
+            </a>
+          </div>`;
       }
     }
+
+    // Process local device system configuration timing clock formats
+    const standardTimeSignature = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    // Assemble final output node component blocks
+    row.innerHTML = `
+      ${avatarTemplate}
+      <div class="bubble">
+        <span class="msg-meta-name">${msg.senderName.split('@')[0]}</span>
+        <div class="msg-text">${msg.text}</div>
+        ${attachmentTemplate}
+        <span class="msg-timestamp">${standardTimeSignature}</span>
+      </div>
+    `;
+
+    chatDisplayPanel.appendChild(row);
     
-    statusText.innerText = 'Upload complete';
-    loadPhotos();
-  });
-
-  // Fixed Offline Download All (Bypasses Cross-Origin Restrictions)
-  window.downloadAll = async () => {
-    statusText.innerText = 'Downloading all photos...';
-    const { data, error } = await supabaseClient.storage.from('photos').list('');
-    
-    if (error || !data) {
-      statusText.innerText = 'Download failed: Could not fetch image list.';
-      return;
-    }
-
-    for (const item of data) {
-      try {
-        const imageUrl = `${SUPABASE_URL}/storage/v1/object/public/photos/${item.name}`;
-        
-        // Force browser to fetch image bytes directly to process download attribute locally
-        const response = await fetch(imageUrl);
-        const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
-
-        const a = document.createElement('a');
-        a.href = blobUrl; 
-        a.download = item.name;
-        document.body.appendChild(a); 
-        a.click(); 
-        document.body.removeChild(a);
-        
-        // Clean up object URL from browser memory
-        URL.revokeObjectURL(blobUrl);
-      } catch (err) {
-        console.error("Failed to download image asset:", item.name, err);
-      }
-    }
-    statusText.innerText = 'Download complete';
-  };
+    // Auto Scroll viewport boundary view anchors frame down to meet newly appended message items
+    chatDisplayPanel.scrollTop = chatDisplayPanel.scrollHeight;
+  }
 </script>
 </body>
 </html>
