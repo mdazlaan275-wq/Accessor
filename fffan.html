@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Accessor</title>
+<style>
+body {background:#080808;color:white;font-family:Arial,sans-serif;min-height:100vh;margin:0;padding:0;}
+.topbar {width:100%;padding:18px;text-align:center;font-size:28px;font-weight:bold;letter-spacing:5px;
+  background:linear-gradient(90deg,#111,#2b0000,#111);border-bottom:2px solid red;
+  box-shadow:0 0 20px rgba(255,0,0,0.6);}
+.status {text-align:center;padding:12px;color:#ff9500;font-size:14px;}
+#loginBtn {display:block;margin:40px auto;padding:14px 28px;font-size:18px;font-weight:bold;color:white;
+  background:linear-gradient(135deg,#ff0000,#ff7300);border:none;border-radius:8px;cursor:pointer;
+  box-shadow:0 0 20px rgba(255,70,0,0.9);transition:transform 0.2s ease;}
+#loginBtn:hover {transform:scale(1.05);}
+.hidden {display:none;}
+.gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:14px;}
+.card{background:#111;border:2px solid #ff2d2d;border-radius:18px;overflow:hidden;
+  box-shadow:0 0 12px rgba(255,0,0,0.5);}
+.card img{width:100%;height:220px;object-fit:cover;display:block;}
+.fire{height:4px;background:linear-gradient(90deg,red,orange,yellow,red);
+  background-size:300% 100%;animation:fire 2s linear infinite;}
+@keyframes fire{0%{background-position:0% 50%;}100%{background-position:100% 50%;}}
+</style>
+</head>
+<body>
+
+<div class="topbar">ACCESSOR</div>
+<div class="status" id="status">Please login first</div>
+
+<!-- Login button -->
+<div id="loginSection">
+  <button id="loginBtn">Login with Google</button>
+</div>
+
+<!-- Main content (hidden until login) -->
+<div id="mainContent" class="hidden">
+  <button onclick="downloadAll()">DOWNLOAD ALL OFFLINE</button>
+  <div class="gallery" id="gallery"></div>
+  <input type="file" id="fileInput" multiple accept="image/*">
+</div>
+
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- Firebase SDKs (modular v9 style) -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+  import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
+
+  // ✅ Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyBa4VeqtkTiG1DBcT8bb9mrFMoeJtfTfcU",
+    authDomain: "project1-a8022.firebaseapp.com",
+    databaseURL: "https://project1-a8022-default-rtdb.firebaseio.com", // ✅ Realtime DB
+    projectId: "project1-a8022",
+    storageBucket: "project1-a8022.appspot.com",
+    messagingSenderId: "46609816135",
+    appId: "1:46609816135:web:3c7b21c3c82c05cb682f62",
+    measurementId: "G-WWSZV54BBK"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getDatabase(app);
+  const provider = new GoogleAuthProvider();
+
+  // ✅ Supabase config
+  const SUPABASE_URL = "https://viwxoslxgwdchrpnuyze.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_LxlDxG5gLAaYLBpnsZD-Yw_Km4_P0MW";
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // Elements
+  const loginBtn = document.getElementById("loginBtn");
+  const statusText = document.getElementById("status");
+  const loginSection = document.getElementById("loginSection");
+  const mainContent = document.getElementById("mainContent");
+  const gallery = document.getElementById("gallery");
+  const fileInput = document.getElementById("fileInput");
+
+  // Login button click
+  loginBtn.addEventListener("click", async () => {
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      // Save user info in Realtime Database
+      await set(ref(db, 'users/' + user.uid), {
+        name: user.displayName,
+        email: user.email,
+        photo: user.photoURL,
+        lastLogin: new Date().toISOString()
+      });
+
+      statusText.innerText = "Welcome " + user.email;
+      loginSection.classList.add("hidden");
+      mainContent.classList.remove("hidden");
+
+      loadPhotos();
+    } catch (error) {
+      console.error("Login failed:", error.code, error.message);
+      statusText.innerText = "Login failed: " + error.message;
+    }
+  });
+
+  // Supabase functions
+  async function loadPhotos(){
+    gallery.innerHTML='';
+    const { data,error } = await supabaseClient.storage.from('photos').list('',{
+      limit:100,sortBy:{column:'created_at',order:'desc'}
+    });
+    if(error){statusText.innerText='Error loading photos';return;}
+    if(data.length===0){statusText.innerText='No photos uploaded';return;}
+    statusText.innerText=data.length + ' photos loaded';
+    for(const item of data){
+      const imageUrl = `${SUPABASE_URL}/storage/v1/object/public/photos/${item.name}`;
+      const card = document.createElement('div');
+      card.className='card';
+      card.innerHTML = `<img src="${imageUrl}" loading="lazy"><div class="fire"></div>`;
+      gallery.appendChild(card);
+    }
+  }
+
+  fileInput.addEventListener('change', async(e)=>{
+    const files = e.target.files;
+    if(!files.length)return;
+    statusText.innerText = 'Uploading photos...';
+    for(const file of files){
+      const fileName = Date.now() + '_' + file.name;
+      await supabaseClient.storage.from('photos').upload(fileName,file);
+    }
+    statusText.innerText = 'Upload complete';
+    loadPhotos();
+  });
+
+  window.downloadAll = async()=>{
+    statusText.innerText = 'Downloading all photos...';
+    const { data } = await supabaseClient.storage.from('photos').list('');
+    for(const item of data){
+      const imageUrl = `${SUPABASE_URL}/storage/v1/object/public/photos/${item.name}`;
+      const a = document.createElement('a');
+      a.href=imageUrl; a.download=item.name;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
+    statusText.innerText = 'Download complete';
+  };
+</script>
+</body>
+</html>
