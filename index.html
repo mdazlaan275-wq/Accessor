@@ -3,139 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accessor Secure</title>
+    <title>Accessor - Custom Secure</title>
     <style>
-        :root { --bg-main: #060606; --bg-panel: #111111; --accent-red: #ff2d2d; --text-light: #eeeeee; }
+        :root { --bg-main: #060606; --accent-red: #ff2d2d; --text-light: #eeeeee; }
         body { background: var(--bg-main); color: var(--text-light); font-family: sans-serif; margin: 0; padding: 0; height: 100vh; display: flex; justify-content: center; align-items: center; }
         .screen { width: 100%; max-width: 400px; padding: 20px; text-align: center; }
         .hidden { display: none !important; }
         .input-box { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #333; background: #161616; color: white; box-sizing: border-box; }
         button { background: var(--accent-red); color: white; border: none; padding: 12px 25px; border-radius: 20px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; transition: transform 0.2s; }
         button:active { transform: scale(0.95); }
-        #adminControls { border: 2px dashed var(--accent-red); padding: 15px; margin-top: 20px; border-radius: 10px; }
+        .btn-row { display: flex; gap: 10px; }
+        #adminControls { border: 2px dashed var(--accent-red); padding: 15px; margin-top: 20px; border-radius: 10px; text-align: left; }
+        .user-list-item { background: #1a1a1a; padding: 10px; margin: 5px 0; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
+        .delete-btn { background: #800; padding: 5px 10px; width: auto; margin: 0; border-radius: 5px; font-size: 12px; }
     </style>
 </head>
 <body>
 
 <div id="authScreen" class="screen">
     <h1>ACCESSOR</h1>
-    <p style="color: #888; font-size: 14px; margin-bottom: 20px;">Secure Access Required</p>
+    <p style="color: #888; font-size: 14px; margin-bottom: 20px;">System Terminal</p>
     
-    <input type="text" id="userName" class="input-box" placeholder="Your Name (For new accounts)">
-    <input type="email" id="userEmail" class="input-box" placeholder="Email">
-    <input type="password" id="userPass" class="input-box" placeholder="Password">
+    <input type="text" id="userName" class="input-box" placeholder="Enter Unique Username">
+    <input type="password" id="userPass" class="input-box" placeholder="Create / Enter Password">
     
-    <button id="authBtn">LOGIN / SIGN UP</button>
+    <div class="btn-row">
+        <button id="loginBtn">Login</button>
+        <button id="signupBtn" style="background: #222; border: 1px solid #444;">Sign Up</button>
+    </div>
 </div>
 
 <div id="chatScreen" class="screen hidden">
-    <h2>Welcome to Accessor</h2>
+    <h2>Accessor Network</h2>
     <p id="welcomeUserText" style="color: #aaa; margin-bottom: 20px;"></p>
     
-    <button id="logoutBtn" style="background: #444;">Logout</button>
+    <button id="logoutBtn" style="background: #444;">Disconnect (Logout)</button>
     
     <div id="adminControls" class="hidden">
-        <h3>🛡️ Admin Console</h3>
-        <button id="wipeDbBtn" style="background: #800;">Wipe All Messages</button>
+        <h3 style="margin-top:0; color: var(--accent-red);">🛡️ Master Admin Console</h3>
+        <button id="wipeMessagesBtn" style="background: #800; margin-bottom: 15px;">Wipe All Chat Messages</button>
+        <h4>Registered Users:</h4>
+        <div id="userListContainer"></div>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-    // IMPORTED updateProfile TO SAVE THE USER'S NAME
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
-    import { getDatabase, ref, remove } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
+    import { getDatabase, ref, set, get, child, remove } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBa4VeqtkTiG1DBcT8bb9mrFMoeJtfTfcU",
-        authDomain: "project1-a8022.firebaseapp.com",
         databaseURL: "https://project1-a8022-default-rtdb.firebaseio.com",
         projectId: "project1-a8022",
-        storageBucket: "project1-a8022.appspot.com",
-        messagingSenderId: "46609816135",
-        appId: "1:46609816135:web:3c7b21c3c82c05cb682f62"
     };
 
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
     const db = getDatabase(app);
     
-    // Ensure the user stays logged in even if the app closes
-    setPersistence(auth, browserLocalPersistence);
-
-    const ADMIN_UID = "68xzbGh2K6MxKZW8TeRTEhSjph42"; 
+    // --- YOUR ADMIN USERNAME ---
+    // Anyone who logs in exactly with this name gets the Admin Panel
+    const ADMIN_USERNAME = "AdminAzlaan"; 
 
     // DOM Elements
     const authScreen = document.getElementById('authScreen');
     const chatScreen = document.getElementById('chatScreen');
     const adminControls = document.getElementById('adminControls');
     const welcomeUserText = document.getElementById('welcomeUserText');
+    const userListContainer = document.getElementById('userListContainer');
 
-    // Monitor Login Status
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            authScreen.classList.add('hidden');
-            chatScreen.classList.remove('hidden');
-            welcomeUserText.innerText = `Logged in as: ${user.displayName || user.email}`;
-            
-            if (user.uid === ADMIN_UID) {
-                adminControls.classList.remove('hidden');
-            }
-        } else {
-            authScreen.classList.remove('hidden');
-            chatScreen.classList.add('hidden');
-            adminControls.classList.add('hidden');
-        }
-    });
+    // Auto-Login Check (Local Storage)
+    const savedSession = localStorage.getItem("accessor_active_user");
+    if (savedSession) {
+        bootSystem(savedSession);
+    }
 
-    // Handle Login & Sign Up (Event Listener instead of inline function)
-    document.getElementById('authBtn').addEventListener('click', async () => {
+    // --- SIGN UP LOGIC ---
+    document.getElementById('signupBtn').addEventListener('click', async () => {
         const name = document.getElementById('userName').value.trim();
-        const email = document.getElementById('userEmail').value.trim();
         const pass = document.getElementById('userPass').value.trim();
 
-        if (!email || !pass) {
-            return alert("Please enter both an email and a password.");
+        if (!name || !pass) return alert("Username and Password are required.");
+        if (name.includes(".") || name.includes("#") || name.includes("$") || name.includes "[" || name.includes "]") {
+            return alert("Usernames cannot contain symbols like . # $ [ ]");
         }
 
-        try {
-            // Step 1: Try to log the user in
-            await signInWithEmailAndPassword(auth, email, pass);
-        } catch (e) {
-            // Step 2: If the account doesn't exist, create it automatically
-            if (e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential' || e.code === 'auth/invalid-email') {
-                if (!name) {
-                    return alert("Since this is a new account, please provide your name in the top box.");
-                }
-                try {
-                    const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
-                    // Step 3: Save the custom name to the new profile
-                    await updateProfile(userCredential.user, { displayName: name });
-                    // Refresh the text to show their new name immediately
-                    welcomeUserText.innerText = `Logged in as: ${name}`;
-                } catch (signUpError) {
-                    alert("Sign Up Error: " + signUpError.message);
-                }
+        const dbRef = ref(db);
+        const snapshot = await get(child(dbRef, `users/${name}`));
+        
+        if (snapshot.exists()) {
+            alert("This username is already taken. Please choose another or Login.");
+        } else {
+            // Save new user to custom database path
+            await set(ref(db, `users/${name}`), {
+                password: pass,
+                profilePic: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=ff2d2d&color=fff`,
+                createdAt: Date.now()
+            });
+            alert("Account created!");
+            localStorage.setItem("accessor_active_user", name);
+            bootSystem(name);
+        }
+    });
+
+    // --- LOGIN LOGIC ---
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+        const name = document.getElementById('userName').value.trim();
+        const pass = document.getElementById('userPass').value.trim();
+
+        if (!name || !pass) return alert("Username and Password are required.");
+
+        const dbRef = ref(db);
+        const snapshot = await get(child(dbRef, `users/${name}`));
+        
+        if (snapshot.exists()) {
+            const userData = snapshot.val();
+            if (userData.password === pass) {
+                // Password matches
+                localStorage.setItem("accessor_active_user", name);
+                bootSystem(name);
             } else {
-                // Show actual wrong password errors
-                alert("Login Error: " + e.message);
+                alert("Incorrect Password.");
+            }
+        } else {
+            alert("User not found. Check your spelling or Sign Up.");
+        }
+    });
+
+    // --- LOGOUT LOGIC ---
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+        localStorage.removeItem("accessor_active_user");
+        location.reload(); // Refresh page to clear data
+    });
+
+    // --- SYSTEM BOOT & ADMIN CONTROLS ---
+    function bootSystem(username) {
+        authScreen.classList.add('hidden');
+        chatScreen.classList.remove('hidden');
+        welcomeUserText.innerText = `Connected as: ${username}`;
+
+        if (username === ADMIN_USERNAME) {
+            adminControls.classList.remove('hidden');
+            loadAdminPanel();
+        }
+    }
+
+    async function loadAdminPanel() {
+        const dbRef = ref(db);
+        const snapshot = await get(child(dbRef, `users`));
+        userListContainer.innerHTML = ""; // clear loading
+        
+        if (snapshot.exists()) {
+            const allUsers = snapshot.val();
+            for (const [uname, udata] of Object.entries(allUsers)) {
+                if (uname !== ADMIN_USERNAME) {
+                    const div = document.createElement('div');
+                    div.className = 'user-list-item';
+                    div.innerHTML = `
+                        <span><strong>${uname}</strong> (Pass: ${udata.password})</span>
+                        <button class="delete-btn" onclick="deleteUser('${uname}')">Delete</button>
+                    `;
+                    userListContainer.appendChild(div);
+                }
             }
         }
-    });
+    }
 
-    // Handle Logout
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-        signOut(auth);
-    });
+    // Attach to window so inline onclick works for dynamic buttons
+    window.deleteUser = async (username) => {
+        if (confirm(`Are you sure you want to permanently delete user: ${username}?`)) {
+            await remove(ref(db, `users/${username}`));
+            alert("User deleted. They will not be able to log in anymore.");
+            loadAdminPanel(); // Refresh list
+        }
+    }
 
-    // Handle Admin Database Wipe
-    document.getElementById('wipeDbBtn').addEventListener('click', () => {
-        if (confirm("WARNING: Are you sure you want to delete ALL messages in the database? This cannot be undone.")) {
-            remove(ref(db, 'messages')).then(() => {
-                alert("Database wiped successfully.");
-            }).catch((error) => {
-                alert("Failed to wipe database: " + error.message);
-            });
+    document.getElementById('wipeMessagesBtn').addEventListener('click', async () => {
+        if (confirm("Delete all chat history globally?")) {
+            await remove(ref(db, 'messages'));
+            alert("Chat wiped.");
         }
     });
 </script>
