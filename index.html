@@ -378,7 +378,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+  import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
   import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
@@ -416,6 +416,18 @@
   let localUserReference = null;
   let systematicChatInitialized = false;
 
+  // Process fallback redirect initialization checks (handles runtime capture)
+  getRedirectResult(auth)
+    .then((result) => {
+      if (result?.user) {
+        console.log("Redirect login connection established successfully.");
+      }
+    })
+    .catch((err) => {
+      console.error("Redirect parsing structural fault:", err);
+      alert("Authentication Redirect Sync Error: " + err.message);
+    });
+
   // Persistent Auth Listener
   onAuthStateChanged(auth, (user) => {
     if (user) {
@@ -435,8 +447,12 @@
   });
 
   loginBtn.addEventListener("click", async () => {
-    try { await signInWithPopup(auth, provider); } 
-    catch (err) { alert("Authentication Failed: " + err.message); }
+    try { 
+      // Modified from signInWithPopup to natively pass inside isolated app structures
+      await signInWithRedirect(auth, provider); 
+    } catch (err) { 
+      alert("Authentication Failed: " + err.message); 
+    }
   });
 
   logoutBtn.addEventListener("click", async () => {
@@ -482,7 +498,6 @@
     const sanitizedFileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
 
     try {
-      // 1. Updated target bucket to 'new_photos' and added 'upsert: true' configuration rule
       const { data, error } = await supabaseClient.storage
         .from('new_photos')
         .upload(sanitizedFileName, file, {
@@ -492,7 +507,6 @@
         
       if (error) throw error;
 
-      // 2. Updated asset retrieval logic to explicitly query 'new_photos' bucket configuration via SDK
       const { data: publicUrlData } = supabaseClient.storage
         .from('new_photos')
         .getPublicUrl(sanitizedFileName);
