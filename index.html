@@ -60,8 +60,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     
-    // --- YOUR ADMIN USERNAME ---
-    // Anyone who logs in exactly with this name gets the Admin Panel
     const ADMIN_USERNAME = "AdminAzlaan"; 
 
     // DOM Elements
@@ -71,76 +69,50 @@
     const welcomeUserText = document.getElementById('welcomeUserText');
     const userListContainer = document.getElementById('userListContainer');
 
-    // Auto-Login Check (Local Storage)
+    // Auto-Login Check
     const savedSession = localStorage.getItem("accessor_active_user");
-    if (savedSession) {
-        bootSystem(savedSession);
-    }
+    if (savedSession) { bootSystem(savedSession); }
 
-    // --- SIGN UP LOGIC ---
+    // SIGN UP
     document.getElementById('signupBtn').addEventListener('click', async () => {
         const name = document.getElementById('userName').value.trim();
         const pass = document.getElementById('userPass').value.trim();
-
-        if (!name || !pass) return alert("Username and Password are required.");
-        if (name.includes(".") || name.includes("#") || name.includes("$") || name.includes "[" || name.includes "]") {
-            return alert("Usernames cannot contain symbols like . # $ [ ]");
-        }
-
-        const dbRef = ref(db);
-        const snapshot = await get(child(dbRef, `users/${name}`));
+        if (!name || !pass) return alert("All fields required.");
         
+        const snapshot = await get(child(ref(db), `users/${name}`));
         if (snapshot.exists()) {
-            alert("This username is already taken. Please choose another or Login.");
+            alert("Username taken.");
         } else {
-            // Save new user to custom database path
-            await set(ref(db, `users/${name}`), {
-                password: pass,
-                profilePic: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=ff2d2d&color=fff`,
-                createdAt: Date.now()
-            });
-            alert("Account created!");
+            await set(ref(db, `users/${name}`), { password: pass, createdAt: Date.now() });
             localStorage.setItem("accessor_active_user", name);
             bootSystem(name);
         }
     });
 
-    // --- LOGIN LOGIC ---
+    // LOGIN
     document.getElementById('loginBtn').addEventListener('click', async () => {
         const name = document.getElementById('userName').value.trim();
         const pass = document.getElementById('userPass').value.trim();
-
-        if (!name || !pass) return alert("Username and Password are required.");
-
-        const dbRef = ref(db);
-        const snapshot = await get(child(dbRef, `users/${name}`));
-        
-        if (snapshot.exists()) {
-            const userData = snapshot.val();
-            if (userData.password === pass) {
-                // Password matches
-                localStorage.setItem("accessor_active_user", name);
-                bootSystem(name);
-            } else {
-                alert("Incorrect Password.");
-            }
+        const snapshot = await get(child(ref(db), `users/${name}`));
+        if (snapshot.exists() && snapshot.val().password === pass) {
+            localStorage.setItem("accessor_active_user", name);
+            bootSystem(name);
         } else {
-            alert("User not found. Check your spelling or Sign Up.");
+            alert("Invalid credentials.");
         }
     });
 
-    // --- LOGOUT LOGIC ---
+    // LOGOUT
     document.getElementById('logoutBtn').addEventListener('click', () => {
         localStorage.removeItem("accessor_active_user");
-        location.reload(); // Refresh page to clear data
+        location.reload();
     });
 
-    // --- SYSTEM BOOT & ADMIN CONTROLS ---
+    // SYSTEM BOOT
     function bootSystem(username) {
         authScreen.classList.add('hidden');
         chatScreen.classList.remove('hidden');
         welcomeUserText.innerText = `Connected as: ${username}`;
-
         if (username === ADMIN_USERNAME) {
             adminControls.classList.remove('hidden');
             loadAdminPanel();
@@ -148,40 +120,34 @@
     }
 
     async function loadAdminPanel() {
-        const dbRef = ref(db);
-        const snapshot = await get(child(dbRef, `users`));
-        userListContainer.innerHTML = ""; // clear loading
-        
+        const snapshot = await get(child(ref(db), `users`));
+        userListContainer.innerHTML = ""; 
         if (snapshot.exists()) {
-            const allUsers = snapshot.val();
-            for (const [uname, udata] of Object.entries(allUsers)) {
+            for (const [uname, udata] of Object.entries(snapshot.val())) {
                 if (uname !== ADMIN_USERNAME) {
                     const div = document.createElement('div');
                     div.className = 'user-list-item';
-                    div.innerHTML = `
-                        <span><strong>${uname}</strong> (Pass: ${udata.password})</span>
-                        <button class="delete-btn" onclick="deleteUser('${uname}')">Delete</button>
-                    `;
+                    div.innerHTML = `<span><strong>${uname}</strong> (Pass: ${udata.password})</span>
+                                     <button class="delete-btn" data-username="${uname}">Delete</button>`;
                     userListContainer.appendChild(div);
                 }
             }
         }
     }
 
-    // Attach to window so inline onclick works for dynamic buttons
-    window.deleteUser = async (username) => {
-        if (confirm(`Are you sure you want to permanently delete user: ${username}?`)) {
-            await remove(ref(db, `users/${username}`));
-            alert("User deleted. They will not be able to log in anymore.");
-            loadAdminPanel(); // Refresh list
+    // EVENT DELEGATION for Delete Buttons
+    userListContainer.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('delete-btn')) {
+            const username = e.target.getAttribute('data-username');
+            if (confirm(`Delete ${username}?`)) {
+                await remove(ref(db, `users/${username}`));
+                loadAdminPanel();
+            }
         }
-    }
+    });
 
     document.getElementById('wipeMessagesBtn').addEventListener('click', async () => {
-        if (confirm("Delete all chat history globally?")) {
-            await remove(ref(db, 'messages'));
-            alert("Chat wiped.");
-        }
+        if (confirm("Wipe all chats?")) { await remove(ref(db, 'messages')); alert("Wiped."); }
     });
 </script>
 </body>
