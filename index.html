@@ -1,154 +1,196 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accessor - Custom Secure</title>
-    <style>
-        :root { --bg-main: #060606; --accent-red: #ff2d2d; --text-light: #eeeeee; }
-        body { background: var(--bg-main); color: var(--text-light); font-family: sans-serif; margin: 0; padding: 0; height: 100vh; display: flex; justify-content: center; align-items: center; }
-        .screen { width: 100%; max-width: 400px; padding: 20px; text-align: center; }
-        .hidden { display: none !important; }
-        .input-box { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #333; background: #161616; color: white; box-sizing: border-box; }
-        button { background: var(--accent-red); color: white; border: none; padding: 12px 25px; border-radius: 20px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; transition: transform 0.2s; }
-        button:active { transform: scale(0.95); }
-        .btn-row { display: flex; gap: 10px; }
-        #adminControls { border: 2px dashed var(--accent-red); padding: 15px; margin-top: 20px; border-radius: 10px; text-align: left; }
-        .user-list-item { background: #1a1a1a; padding: 10px; margin: 5px 0; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
-        .delete-btn { background: #800; padding: 5px 10px; width: auto; margin: 0; border-radius: 5px; font-size: 12px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Accessor - Secure Download</title>
+<style>
+  :root {
+    --bg-main: #060606;
+    --bg-panel: #111111;
+    --accent-red: #ff2d2d;
+    --accent-orange: #ff9500;
+    --text-light: #eeeeee;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  body {
+    background: radial-gradient(circle at center, #1a0303 0%, var(--bg-main) 100%);
+    color: var(--text-light);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  .container {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: fadeIn 1s ease-out;
+    padding: 20px;
+    width: 100%;
+  }
+
+  /* Premium Card Styling */
+  .download-card {
+    background: var(--bg-panel);
+    border: 2px solid var(--accent-red);
+    border-radius: 20px;
+    padding: 40px 30px;
+    text-align: center;
+    box-shadow: 0 0 40px rgba(255, 45, 45, 0.2);
+    width: 100%;
+    max-width: 420px;
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow 0.4s ease;
+  }
+
+  /* Rotating subtle glow behind the card content */
+  .download-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: conic-gradient(transparent, rgba(255, 45, 45, 0.15), transparent 30%);
+    animation: rotate 6s linear infinite;
+    z-index: 0;
+  }
+
+  .card-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .download-card:hover {
+    box-shadow: 0 0 60px rgba(255, 45, 45, 0.4);
+  }
+
+  /* Logo Animations */
+  .logo-img {
+    width: 90px;
+    height: 90px;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 0 15px rgba(255, 45, 45, 0.6));
+    animation: float 3s ease-in-out infinite;
+    object-fit: contain;
+  }
+
+  h1 {
+    font-size: 32px;
+    letter-spacing: 6px;
+    margin-bottom: 10px;
+    color: white;
+    text-shadow: 0 0 15px rgba(255, 45, 45, 0.8);
+    text-transform: uppercase;
+    font-weight: 900;
+  }
+
+  p {
+    color: #888;
+    font-size: 15px;
+    margin-bottom: 40px;
+    line-height: 1.6;
+  }
+
+  /* High-End Button Design */
+  .download-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    padding: 16px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    text-decoration: none;
+    background: linear-gradient(135deg, var(--accent-red), #ff7300);
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    box-shadow: 0 0 25px rgba(255, 70, 0, 0.5);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  .download-btn:hover {
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 12px 35px rgba(255, 70, 0, 0.8);
+  }
+
+  .download-btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 5px 15px rgba(255, 70, 0, 0.6);
+  }
+
+  /* Animated Download SVG */
+  .download-btn svg {
+    width: 22px;
+    height: 22px;
+    fill: white;
+    animation: bounceDown 2s infinite;
+  }
+
+  /* Keyframe Animations */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+
+  @keyframes rotate {
+    100% { transform: rotate(1turn); }
+  }
+
+  @keyframes bounceDown {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(5px); }
+    60% { transform: translateY(3px); }
+  }
+</style>
 </head>
 <body>
 
-<div id="authScreen" class="screen">
-    <h1>ACCESSOR</h1>
-    <p style="color: #888; font-size: 14px; margin-bottom: 20px;">System Terminal</p>
-    
-    <input type="text" id="userName" class="input-box" placeholder="Enter Unique Username">
-    <input type="password" id="userPass" class="input-box" placeholder="Create / Enter Password">
-    
-    <div class="btn-row">
-        <button id="loginBtn">Login</button>
-        <button id="signupBtn" style="background: #222; border: 1px solid #444;">Sign Up</button>
+<div class="container">
+  <div class="download-card">
+    <div class="card-content">
+      <!-- Your Logo -->
+      <img src="logo.png" alt="Accessor Logo" class="logo-img" onerror="this.style.display='none'">
+      
+      <h1>ACCESSOR</h1>
+      <p>Secure Peer-to-Peer Transmission<br>Your requested application package is ready.</p>
+      
+      <!-- The Download Button -->
+      <a href="https://drive.google.com/file/d/1M0_zvLiuE0qMKUyS6HVL0QF3IB7oLrLw/view" class="download-btn" target="_blank" rel="noopener noreferrer">
+        <svg viewBox="0 0 24 24">
+          <path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/>
+        </svg>
+        Download App
+      </a>
     </div>
+  </div>
 </div>
 
-<div id="chatScreen" class="screen hidden">
-    <h2>Accessor Network</h2>
-    <p id="welcomeUserText" style="color: #aaa; margin-bottom: 20px;"></p>
-    
-    <button id="logoutBtn" style="background: #444;">Disconnect (Logout)</button>
-    
-    <div id="adminControls" class="hidden">
-        <h3 style="margin-top:0; color: var(--accent-red);">🛡️ Master Admin Console</h3>
-        <button id="wipeMessagesBtn" style="background: #800; margin-bottom: 15px;">Wipe All Chat Messages</button>
-        <h4>Registered Users:</h4>
-        <div id="userListContainer"></div>
-    </div>
-</div>
-
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-    import { getDatabase, ref, set, get, child, remove } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyBa4VeqtkTiG1DBcT8bb9mrFMoeJtfTfcU",
-        databaseURL: "https://project1-a8022-default-rtdb.firebaseio.com",
-        projectId: "project1-a8022",
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    
-    const ADMIN_USERNAME = "AdminAzlaan"; 
-
-    // DOM Elements
-    const authScreen = document.getElementById('authScreen');
-    const chatScreen = document.getElementById('chatScreen');
-    const adminControls = document.getElementById('adminControls');
-    const welcomeUserText = document.getElementById('welcomeUserText');
-    const userListContainer = document.getElementById('userListContainer');
-
-    // Auto-Login Check
-    const savedSession = localStorage.getItem("accessor_active_user");
-    if (savedSession) { bootSystem(savedSession); }
-
-    // SIGN UP
-    document.getElementById('signupBtn').addEventListener('click', async () => {
-        const name = document.getElementById('userName').value.trim();
-        const pass = document.getElementById('userPass').value.trim();
-        if (!name || !pass) return alert("All fields required.");
-        
-        const snapshot = await get(child(ref(db), `users/${name}`));
-        if (snapshot.exists()) {
-            alert("Username taken.");
-        } else {
-            await set(ref(db, `users/${name}`), { password: pass, createdAt: Date.now() });
-            localStorage.setItem("accessor_active_user", name);
-            bootSystem(name);
-        }
-    });
-
-    // LOGIN
-    document.getElementById('loginBtn').addEventListener('click', async () => {
-        const name = document.getElementById('userName').value.trim();
-        const pass = document.getElementById('userPass').value.trim();
-        const snapshot = await get(child(ref(db), `users/${name}`));
-        if (snapshot.exists() && snapshot.val().password === pass) {
-            localStorage.setItem("accessor_active_user", name);
-            bootSystem(name);
-        } else {
-            alert("Invalid credentials.");
-        }
-    });
-
-    // LOGOUT
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-        localStorage.removeItem("accessor_active_user");
-        location.reload();
-    });
-
-    // SYSTEM BOOT
-    function bootSystem(username) {
-        authScreen.classList.add('hidden');
-        chatScreen.classList.remove('hidden');
-        welcomeUserText.innerText = `Connected as: ${username}`;
-        if (username === ADMIN_USERNAME) {
-            adminControls.classList.remove('hidden');
-            loadAdminPanel();
-        }
-    }
-
-    async function loadAdminPanel() {
-        const snapshot = await get(child(ref(db), `users`));
-        userListContainer.innerHTML = ""; 
-        if (snapshot.exists()) {
-            for (const [uname, udata] of Object.entries(snapshot.val())) {
-                if (uname !== ADMIN_USERNAME) {
-                    const div = document.createElement('div');
-                    div.className = 'user-list-item';
-                    div.innerHTML = `<span><strong>${uname}</strong> (Pass: ${udata.password})</span>
-                                     <button class="delete-btn" data-username="${uname}">Delete</button>`;
-                    userListContainer.appendChild(div);
-                }
-            }
-        }
-    }
-
-    // EVENT DELEGATION for Delete Buttons
-    userListContainer.addEventListener('click', async (e) => {
-        if (e.target.classList.contains('delete-btn')) {
-            const username = e.target.getAttribute('data-username');
-            if (confirm(`Delete ${username}?`)) {
-                await remove(ref(db, `users/${username}`));
-                loadAdminPanel();
-            }
-        }
-    });
-
-    document.getElementById('wipeMessagesBtn').addEventListener('click', async () => {
-        if (confirm("Wipe all chats?")) { await remove(ref(db, 'messages')); alert("Wiped."); }
-    });
-</script>
 </body>
-</html>
+</html>s
