@@ -10,7 +10,8 @@
         .screen { width: 100%; max-width: 400px; padding: 20px; text-align: center; }
         .hidden { display: none !important; }
         .input-box { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #333; background: #161616; color: white; box-sizing: border-box; }
-        button { background: var(--accent-red); color: white; border: none; padding: 12px 25px; border-radius: 20px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; }
+        button { background: var(--accent-red); color: white; border: none; padding: 12px 25px; border-radius: 20px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; transition: transform 0.2s; }
+        button:active { transform: scale(0.95); }
         #adminControls { border: 2px dashed var(--accent-red); padding: 15px; margin-top: 20px; border-radius: 10px; }
     </style>
 </head>
@@ -18,25 +19,31 @@
 
 <div id="authScreen" class="screen">
     <h1>ACCESSOR</h1>
-    <input type="text" id="userName" class="input-box" placeholder="Your Name">
+    <p style="color: #888; font-size: 14px; margin-bottom: 20px;">Secure Access Required</p>
+    
+    <input type="text" id="userName" class="input-box" placeholder="Your Name (For new accounts)">
     <input type="email" id="userEmail" class="input-box" placeholder="Email">
     <input type="password" id="userPass" class="input-box" placeholder="Password">
-    <button onclick="handleAuth()">LOGIN / SIGN UP</button>
+    
+    <button id="authBtn">LOGIN / SIGN UP</button>
 </div>
 
 <div id="chatScreen" class="screen hidden">
     <h2>Welcome to Accessor</h2>
-    <button onclick="logout()" style="background: #444;">Logout</button>
+    <p id="welcomeUserText" style="color: #aaa; margin-bottom: 20px;"></p>
+    
+    <button id="logoutBtn" style="background: #444;">Logout</button>
     
     <div id="adminControls" class="hidden">
         <h3>🛡️ Admin Console</h3>
-        <button onclick="clearDatabase()" style="background: #800;">Wipe All Messages</button>
+        <button id="wipeDbBtn" style="background: #800;">Wipe All Messages</button>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+    // IMPORTED updateProfile TO SAVE THE USER'S NAME
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
     import { getDatabase, ref, remove } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
 
     const firebaseConfig = {
@@ -53,47 +60,84 @@
     const auth = getAuth(app);
     const db = getDatabase(app);
     
-    // Set Persistence so users stay logged in
+    // Ensure the user stays logged in even if the app closes
     setPersistence(auth, browserLocalPersistence);
 
-    // Your Admin UID inserted
     const ADMIN_UID = "68xzbGh2K6MxKZW8TeRTEhSjph42"; 
 
+    // DOM Elements
+    const authScreen = document.getElementById('authScreen');
+    const chatScreen = document.getElementById('chatScreen');
+    const adminControls = document.getElementById('adminControls');
+    const welcomeUserText = document.getElementById('welcomeUserText');
+
+    // Monitor Login Status
     onAuthStateChanged(auth, (user) => {
         if (user) {
-            document.getElementById('authScreen').classList.add('hidden');
-            document.getElementById('chatScreen').classList.remove('hidden');
-            // Check if user is the admin
-            if(user.uid === ADMIN_UID) {
-                document.getElementById('adminControls').classList.remove('hidden');
+            authScreen.classList.add('hidden');
+            chatScreen.classList.remove('hidden');
+            welcomeUserText.innerText = `Logged in as: ${user.displayName || user.email}`;
+            
+            if (user.uid === ADMIN_UID) {
+                adminControls.classList.remove('hidden');
             }
         } else {
-            document.getElementById('authScreen').classList.remove('hidden');
-            document.getElementById('chatScreen').classList.add('hidden');
-            document.getElementById('adminControls').classList.add('hidden');
+            authScreen.classList.remove('hidden');
+            chatScreen.classList.add('hidden');
+            adminControls.classList.add('hidden');
         }
     });
 
-    window.handleAuth = async () => {
-        const email = document.getElementById('userEmail').value;
-        const pass = document.getElementById('userPass').value;
+    // Handle Login & Sign Up (Event Listener instead of inline function)
+    document.getElementById('authBtn').addEventListener('click', async () => {
+        const name = document.getElementById('userName').value.trim();
+        const email = document.getElementById('userEmail').value.trim();
+        const pass = document.getElementById('userPass').value.trim();
+
+        if (!email || !pass) {
+            return alert("Please enter both an email and a password.");
+        }
+
         try {
+            // Step 1: Try to log the user in
             await signInWithEmailAndPassword(auth, email, pass);
         } catch (e) {
+            // Step 2: If the account doesn't exist, create it automatically
             if (e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential' || e.code === 'auth/invalid-email') {
-                await createUserWithEmailAndPassword(auth, email, pass);
+                if (!name) {
+                    return alert("Since this is a new account, please provide your name in the top box.");
+                }
+                try {
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+                    // Step 3: Save the custom name to the new profile
+                    await updateProfile(userCredential.user, { displayName: name });
+                    // Refresh the text to show their new name immediately
+                    welcomeUserText.innerText = `Logged in as: ${name}`;
+                } catch (signUpError) {
+                    alert("Sign Up Error: " + signUpError.message);
+                }
             } else {
-                alert(e.message);
+                // Show actual wrong password errors
+                alert("Login Error: " + e.message);
             }
         }
-    };
+    });
 
-    window.logout = () => signOut(auth);
-    window.clearDatabase = () => {
-        if(confirm("Are you sure you want to delete all messages?")) {
-            remove(ref(db, 'messages'));
+    // Handle Logout
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+        signOut(auth);
+    });
+
+    // Handle Admin Database Wipe
+    document.getElementById('wipeDbBtn').addEventListener('click', () => {
+        if (confirm("WARNING: Are you sure you want to delete ALL messages in the database? This cannot be undone.")) {
+            remove(ref(db, 'messages')).then(() => {
+                alert("Database wiped successfully.");
+            }).catch((error) => {
+                alert("Failed to wipe database: " + error.message);
+            });
         }
-    };
+    });
 </script>
 </body>
 </html>
