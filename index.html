@@ -314,7 +314,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+  import { getAuth, GoogleAuthProvider, signInWithRedirect, signInWithPopup, getRedirectResult, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
   import { getDatabase, ref, push, onChildAdded, set, onValue } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
@@ -416,7 +416,23 @@
     }
   });
 
-  loginBtn.addEventListener("click", async () => { try { await signInWithRedirect(auth, provider); } catch(e) { alert(e.message); } });
+  // Dynamic Cross-Platform Login Environment Switcher Engine
+  loginBtn.addEventListener("click", async () => { 
+    try { 
+      const isLocalDesktopFile = window.location.protocol === 'file:' && !/Android|iPhone|iPad/i.test(navigator.userAgent);
+
+      if (isLocalDesktopFile) {
+        console.log("PC Local Configuration: Initializing login environment via popup module.");
+        await signInWithPopup(auth, provider); 
+      } else {
+        console.log("Mobile/Emulator Configuration: Initializing login environment via standard redirection.");
+        await signInWithRedirect(auth, provider); 
+      }
+    } catch(e) { 
+      alert("Authorization Block: " + e.message); 
+    } 
+  });
+
   logoutBtn.addEventListener("click", async () => { if(confirm("Disconnect sync session?")) { await signOut(auth); window.location.reload(); } });
 
   // Navigation Tab Management
@@ -462,7 +478,7 @@
       });
 
       if (!executionHasPeers) {
-        dmUserListContainer.innerHTML = '<div class="placeholder-fallback-text">🔒 No other peer connection streams detected on the grid.</div>';
+        dmUserListContainer.innerHTML = '<div class="placeholder-fallback-text" style="padding:20px; color:#555; text-align:center;">🔒 No other peer connection streams detected on the grid.</div>';
       }
     });
 
@@ -480,15 +496,12 @@
     // --- CHANNEL 3: REAL-TIME NOTIFICATION ENGINE ---
     onChildAdded(ref(db, 'direct_messages'), (roomSnapshot) => {
       const roomId = roomSnapshot.key;
-      // Filter out transmission loops not addressing your specific routing ID
       if (!roomId.includes(localUserReference.uid)) return;
 
-      // Bind data listener trees to incoming room packet matrices
       onChildAdded(ref(db, `direct_messages/${roomId}`), (msgSnapshot) => {
         const msg = msgSnapshot.val();
         if (!msg) return;
 
-        // Condition checks: Message from peer, arriving post-boot, while user is elsewhere
         if (msg.uid !== localUserReference.uid && msg.timestamp > appBootTimestamp) {
           if (currentActiveTabId !== 'dmView' || activeDmRoomId !== roomId) {
             const externalSenderUid = roomId.replace(localUserReference.uid, "").replace("_", "");
@@ -497,7 +510,6 @@
           }
         }
         
-        // Live route appending if window matches target ID
         if (activeDmRoomId === roomId) {
           renderMessageBubble(msg, dmChatDisplayPanel);
         }
@@ -536,7 +548,12 @@
   // File Delivery Storage Subsystems
   async function executeFileAttachmentUpload(e, targetNodePath, fileInput, textInput) {
     const file = e.target.files[0];
-    if (!file || !localUserReference) return;
+    
+    // Safety Emulator File Handshake Alert
+    if (!file || !localUserReference) {
+      alert("System Interface Exception: No structural file asset was transmitted from the host device file system chooser mechanism.");
+      return;
+    }
 
     textInput.disabled = true;
     textInput.placeholder = `Uploading asset: ${file.name}...`;
@@ -572,11 +589,9 @@
     const myUid = localUserReference.uid;
     activeDmRoomId = myUid < targetUser.uid ? `${myUid}_${targetUser.uid}` : `${targetUser.uid}_${myUid}`;
 
-    // Flush any unread alerts pointing to this peer's signature ID
     delete unreadRoomsMap[targetUser.uid];
     evaluateNotificationBadgeEngine();
 
-    // Query database history logs manually to populate historical line records on switch in
     onValue(ref(db, `direct_messages/${activeDmRoomId}`), (snapshot) => {
       dmChatDisplayPanel.innerHTML = '';
       snapshot.forEach((childSnap) => {
@@ -590,7 +605,6 @@
   function evaluateNotificationBadgeEngine() {
     const totalUnreadChannelsCount = Object.keys(unreadRoomsMap).length;
     
-    // Toggle Bottom Nav Indicator
     if (totalUnreadChannelsCount > 0) {
       globalDmNavBadge.innerText = "1";
       globalDmNavBadge.classList.remove("hidden");
@@ -598,7 +612,6 @@
       globalDmNavBadge.classList.add("hidden");
     }
 
-    // Toggle specific item points in directory container array loops
     Object.keys(unreadRoomsMap).forEach(uid => {
       const trackingIndicatorNode = document.getElementById(`unread-point-${uid}`);
       if (trackingIndicatorNode) trackingIndicatorNode.classList.remove("hidden");
@@ -638,7 +651,6 @@
     const div = document.createElement("div");
     div.className = "user-matrix-card";
     
-    // Check if item contains an unread mapping trace flag
     const containsAlertMarker = unreadRoomsMap[user.uid] ? "" : "hidden";
 
     div.innerHTML = `
