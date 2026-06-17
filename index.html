@@ -114,8 +114,20 @@
 
     /* ================= MESSAGING ROOM ENGINES ================= */
     .chat-body {
-      flex: 1; overflow-y: auto; padding: 15px;
-      background: linear-gradient(rgba(6, 6, 6, 0.94), rgba(6, 6, 6, 0.94)), url('https://i.imgur.com/8N693aX.png');
+      flex: 1; 
+      overflow-y: auto; 
+      padding: 15px;
+      
+      /* PURE CSS RED FUTURISTIC CYBER GRID BACKGROUND (Replaces dead image) */
+      background-color: #0a0101;
+      background-image: 
+        linear-gradient(rgba(255, 45, 45, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 45, 45, 0.08) 1px, transparent 1px),
+        radial-gradient(circle at center, rgba(150, 10, 10, 0.25) 0%, #0a0101 80%);
+      background-size: 30px 30px, 30px 30px, 100% 100%;
+      background-position: center center;
+      background-attachment: fixed;
+      
       display: flex; flex-direction: column; gap: 15px;
     }
 
@@ -314,7 +326,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithRedirect, signInWithPopup, getRedirectResult, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, getRedirectResult, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
   import { getDatabase, ref, push, onChildAdded, set, onValue } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
@@ -381,8 +393,6 @@
   let unreadRoomsMap = {}; 
   const appBootTimestamp = Date.now(); 
 
-  getRedirectResult(auth).catch((err) => { console.error("Handshake interruption logged:", err); });
-
   // Persistent Authorization Stream Connection Logic
   onAuthStateChanged(auth, async (user) => {
     if (user) {
@@ -415,20 +425,11 @@
     }
   });
 
-  // Bulletproof Cross-Platform Login Controller
+  // Bulletproof Cross-Platform Login Controller - FIXED to use Popup to prevent init.json 404
   loginBtn.addEventListener("click", async () => { 
     try { 
-      // Check if it's a genuine standalone mobile device vs a desktop browser simulating a device
-      const isRealMobileDevice = /Android|iPhone|iPad/i.test(navigator.userAgent) && ('ontouchstart' in window || navigator.maxTouchPoints > 0) && !window.chrome;
-      
-      // If it's a desktop or Chrome emulating a device, use Popup. Real emulators/phones will use Redirect.
-      if (!isRealMobileDevice) {
-        console.log("Desktop/Emulated Environment: Using Popup to bypass cross-site blocking.");
-        await signInWithPopup(auth, provider); 
-      } else {
-        console.log("Native Mobile/Emulator Environment: Using Redirect handler.");
-        await signInWithRedirect(auth, provider); 
-      }
+      // Using Popup by default bypasses the `init.json` 404 issue on GitHub pages entirely.
+      await signInWithPopup(auth, provider); 
     } catch(e) { 
       alert("Authorization Block: " + e.message); 
     } 
