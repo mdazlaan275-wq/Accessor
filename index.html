@@ -378,8 +378,8 @@
   let systematicChatInitialized = false;
   let activeDmRoomId = null;
   let currentActiveTabId = "reelsView";
-  let unreadRoomsMap = {}; // Tracks UIDs of channels sending unread payloads
-  const appBootTimestamp = Date.now(); // Clock marker to drop old alerts during load synchronization
+  let unreadRoomsMap = {}; 
+  const appBootTimestamp = Date.now(); 
 
   getRedirectResult(auth).catch((err) => { console.error("Handshake interruption logged:", err); });
 
@@ -391,7 +391,6 @@
       const activeAvatar = user.photoURL || fallbackUrl;
       const cleanName = user.displayName || user.email.split('@')[0];
 
-      // Insert/Refresh current presence data mapping point arrays inside nodes
       await set(ref(db, `users/${user.uid}`), {
         uid: user.uid,
         name: cleanName,
@@ -416,16 +415,18 @@
     }
   });
 
-  // Dynamic Cross-Platform Login Environment Switcher Engine
+  // Bulletproof Cross-Platform Login Controller
   loginBtn.addEventListener("click", async () => { 
     try { 
-      const isLocalDesktopFile = window.location.protocol === 'file:' && !/Android|iPhone|iPad/i.test(navigator.userAgent);
-
-      if (isLocalDesktopFile) {
-        console.log("PC Local Configuration: Initializing login environment via popup module.");
+      // Check if it's a genuine standalone mobile device vs a desktop browser simulating a device
+      const isRealMobileDevice = /Android|iPhone|iPad/i.test(navigator.userAgent) && ('ontouchstart' in window || navigator.maxTouchPoints > 0) && !window.chrome;
+      
+      // If it's a desktop or Chrome emulating a device, use Popup. Real emulators/phones will use Redirect.
+      if (!isRealMobileDevice) {
+        console.log("Desktop/Emulated Environment: Using Popup to bypass cross-site blocking.");
         await signInWithPopup(auth, provider); 
       } else {
-        console.log("Mobile/Emulator Configuration: Initializing login environment via standard redirection.");
+        console.log("Native Mobile/Emulator Environment: Using Redirect handler.");
         await signInWithRedirect(auth, provider); 
       }
     } catch(e) { 
@@ -549,7 +550,6 @@
   async function executeFileAttachmentUpload(e, targetNodePath, fileInput, textInput) {
     const file = e.target.files[0];
     
-    // Safety Emulator File Handshake Alert
     if (!file || !localUserReference) {
       alert("System Interface Exception: No structural file asset was transmitted from the host device file system chooser mechanism.");
       return;
