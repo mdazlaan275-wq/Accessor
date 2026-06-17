@@ -52,7 +52,7 @@
       transition: transform 0.2s, box-shadow 0.2s; margin-top: 20px;
     }
 
-    /* ================= MAIN ENGINE NAVIGATION LAYOUT ================= */
+    /* ================= MAIN ENGINE FRAMEWORK ================= */
     #mainApp { height: 100%; display: flex; flex-direction: column; }
     
     .app-view {
@@ -62,11 +62,11 @@
     }
     .app-view.active { display: flex; flex-direction: column; }
 
-    /* Top Navigation Header Bar (Stays pinned inside chats) */
+    /* Headers */
     .chat-header {
       background: var(--bg-panel); border-bottom: 2px solid var(--accent-red);
       padding: 10px 15px; display: flex; align-items: center; justify-content: space-between;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 10; height: 60px; box-sizing: border-box;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 10; height: 60px; box-shrink: 0;
     }
 
     .brand-meta { display: flex; align-items: center; gap: 10px; }
@@ -79,30 +79,48 @@
     .current-profile img { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--accent-orange); object-fit: cover; }
     .current-profile span { font-size: 12px; color: var(--accent-orange); font-weight: 600; max-width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    /* ================= 1. REELS VIEW (HOME) ================= */
-    #reelsView { scroll-snap-type: y mandatory; overflow-y: auto; background: #000; height: 100%; }
+    /* ================= 1. DYNAMIC REELS VIEW ================= */
+    #reelsContainer { flex: 1; scroll-snap-type: y mandatory; overflow-y: auto; background: #000; height: 100%; }
+    
     .reel-item {
       height: 100%; width: 100%; scroll-snap-align: start; position: relative;
-      display: flex; align-items: center; justify-content: center; background: #111;
+      display: flex; align-items: center; justify-content: center; background: #000;
     }
-    .reel-content { width: 100%; height: 100%; object-fit: cover; }
+    .reel-content { width: 100%; height: 100%; object-fit: contain; }
     .reel-ui {
       position: absolute; bottom: 20px; left: 15px; right: 15px;
       display: flex; justify-content: space-between; align-items: flex-end;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 5;
+      text-shadow: 0 2px 8px rgba(0,0,0,1); z-index: 5; background: linear-gradient(transparent, rgba(0,0,0,0.7));
+      padding: 10px; border-radius: 10px;
     }
-    .reel-author { font-weight: bold; font-size: 18px; margin-bottom: 5px; color: white; }
-    .reel-caption { font-size: 14px; color: #ddd; }
-    .reel-actions { display: flex; flex-direction: column; gap: 15px; font-size: 24px; cursor: pointer; }
+    .reel-author { font-weight: bold; font-size: 16px; margin-bottom: 5px; color: var(--accent-orange); }
+    .reel-caption { font-size: 13px; color: #fff; }
+    .reel-actions { display: flex; flex-direction: column; gap: 15px; font-size: 24px; color: white; }
 
-    /* ================= 2. GROUP CHAT CONTAINER INTERFACE ================= */
+    /* Professional Reel Empty State */
+    .empty-reels-state {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      height: 100%; width: 100%; text-align: center; padding: 30px; box-sizing: border-box;
+      background: radial-gradient(circle at center, #110202 0%, #060606 100%);
+    }
+    .empty-icon-terminal { font-size: 50px; color: #333; margin-bottom: 15px; animation: pulse 2s infinite; }
+    .empty-title { font-size: 18px; font-weight: 800; letter-spacing: 2px; color: #555; margin-bottom: 5px; }
+    .empty-subtitle { font-size: 12px; color: #3b3b3b; margin-bottom: 20px; text-transform: uppercase; }
+    
+    .action-pill-btn {
+      background: transparent; border: 1px solid var(--accent-red); color: var(--accent-red);
+      padding: 10px 24px; font-weight: bold; border-radius: 20px; cursor: pointer; font-size: 12px;
+      box-shadow: 0 0 10px rgba(255,45,45,0.2); transition: all 0.2s;
+    }
+    .action-pill-btn:active { background: var(--accent-red); color: white; }
+
+    /* ================= COMMON CHAT LOGIC INTERFACES ================= */
     .chat-body {
       flex: 1; overflow-y: auto; padding: 15px;
       background: linear-gradient(rgba(6, 6, 6, 0.94), rgba(6, 6, 6, 0.94)), url('https://i.imgur.com/8N693aX.png');
       display: flex; flex-direction: column; gap: 15px;
     }
 
-    /* Message Bubble Component Engine */
     .msg-row { display: flex; width: 100%; align-items: flex-end; gap: 8px; }
     .msg-row.me { justify-content: flex-end; }
     .msg-row.them { justify-content: flex-start; }
@@ -118,9 +136,9 @@
     .them .msg-meta-name { color: #00adb5; text-align: left; }
     .msg-text { font-size: 14px; line-height: 1.4; }
 
-    /* Attachments */
     .msg-media { margin-top: 6px; border-radius: 8px; overflow: hidden; background: #00000050; border: 1px solid #444; }
-    .msg-media img { max-width: 100%; max-height: 200px; display: block; object-fit: contain; }
+    .msg-media img, .msg-media video { max-width: 100%; max-height: 200px; display: block; object-fit: contain; }
+    
     .doc-file-card { display: flex; align-items: center; gap: 10px; padding: 8px; text-decoration: none; color: white; }
     .doc-icon { font-size: 20px; }
     .doc-details { display: flex; flex-direction: column; overflow: hidden; }
@@ -128,44 +146,53 @@
     .doc-download-lbl { font-size: 10px; color: var(--accent-orange); margin-top: 2px; }
     .msg-timestamp { font-size: 10px; color: #777; margin-top: 5px; align-self: flex-end; }
 
-    /* Footer Input Control Controller */
     .chat-footer {
       background: var(--bg-panel); padding: 10px; display: flex; align-items: center; gap: 8px;
-      border-top: 1px solid #222; box-shadow: 0 -4px 15px rgba(0,0,0,0.6); box-sizing: border-box;
+      border-top: 1px solid #222; box-shadow: 0 -4px 15px rgba(0,0,0,0.6); box-sizing: border-box; box-shrink: 0;
     }
     .attach-btn-label { width: 40px; height: 40px; background: #1f1f1f; border: 1px solid #333; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--accent-red); flex-shrink: 0; }
     .attach-btn-label span { font-size: 26px; line-height: 1; margin-top: -2px; }
     .input-wrapper { flex: 1; }
-    #chatTextInput { width: 100%; background: #161616; border: 1px solid #333; color: white; padding: 12px 14px; border-radius: 20px; font-size: 14px; box-sizing: border-box; }
-    #chatTextInput:focus { border-color: var(--accent-red); outline: none; }
-    #sendBtn { background: linear-gradient(135deg, var(--accent-red), #b30000); border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    #sendBtn svg { width: 18px; height: 18px; fill: white; margin-left: 2px; }
+    .terminal-input-style { width: 100%; background: #161616; border: 1px solid #333; color: white; padding: 12px 14px; border-radius: 20px; font-size: 14px; box-sizing: border-box; }
+    .terminal-input-style:focus { border-color: var(--accent-red); outline: none; }
+    .circle-send-btn { background: linear-gradient(135deg, var(--accent-red), #b30000); border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .circle-send-btn svg { width: 18px; height: 18px; fill: white; margin-left: 2px; }
 
-    /* ================= 3. PRIVATE DM CHAT VIEW ================= */
-    .view-header-title { padding: 15px; background: var(--bg-panel); border-bottom: 1px solid #222; text-align: center; font-weight: bold; letter-spacing: 1px; }
-    .placeholder-fallback-text { padding: 40px; text-align: center; color: #555; font-size: 14px; }
+    /* ================= 3. FUNCTIONAL P2P DIRECT MESSAGE SYSTEM ================= */
+    .view-header-title { padding: 15px; background: var(--bg-panel); border-bottom: 1px solid #222; text-align: center; font-weight: bold; letter-spacing: 1px; height: 60px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; position: relative; }
+    .dm-back-btn { position: absolute; left: 15px; background: #222; border: 1px solid #444; color: white; padding: 4px 10px; border-radius: 5px; font-size: 12px; cursor: pointer; }
+    
+    #dmUserListContainer { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+    .user-matrix-card {
+      background: var(--bg-panel); border: 1px solid #222; border-radius: 12px; padding: 12px;
+      display: flex; align-items: center; gap: 12px; cursor: pointer; transition: border-color 0.2s;
+    }
+    .user-matrix-card:active { border-color: var(--accent-red); background: #161616; }
+    .user-matrix-avatar { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #444; object-fit: cover; }
+    .user-matrix-info { display: flex; flex-direction: column; }
+    .user-matrix-name { font-weight: bold; font-size: 14px; color: white; }
+    .user-matrix-status { font-size: 11px; color: #555; margin-top: 2px; }
+    .user-matrix-status.online { color: #00ff66; }
 
-    /* ================= 4. COMPREHENSIVE PROFILE VIEW ================= */
+    /* ================= 4. ACCOUNT SYSTEM USER PROFILE ================= */
     #profileView { text-align: center; background: #0b0b0b; height: 100%; }
     .profile-card-layout { padding: 40px 20px; display: flex; flex-direction: column; align-items: center; }
     .large-profile-avatar { width: 110px; height: 110px; border-radius: 50%; border: 3px solid var(--accent-red); object-fit: cover; margin-bottom: 15px; box-shadow: 0 0 20px rgba(255,45,45,0.3); }
     .profile-display-name { font-size: 24px; font-weight: bold; color: white; margin: 5px 0; }
     .profile-email-meta { font-size: 14px; color: #666; margin-bottom: 30px; }
     .logout-action-btn { background: #1a1a1a; border: 1px solid #333; color: var(--accent-red); padding: 12px 30px; border-radius: 25px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
-    .logout-action-btn:hover { background: #250808; }
-
-    /* ================= BOTTOM NAVIGATION CONTROL BAR ================= */
+    
+    /* ================= BOTTOM NAVIGATION BAR ================= */
     .bottom-nav {
       height: var(--nav-height); background: var(--bg-panel); border-top: 1px solid #222;
       display: flex; justify-content: space-around; align-items: center;
-      padding-bottom: env(safe-area-inset-bottom); box-sizing: border-box; z-index: 100;
+      padding-bottom: env(safe-area-inset-bottom); box-sizing: border-box; z-index: 100; box-shrink: 0;
     }
-    .nav-item {
-      color: #555; font-size: 11px; font-weight: bold; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; width: 25%; text-align: center;
-    }
+    .nav-item { color: #555; font-size: 11px; font-weight: bold; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; width: 25%; text-align: center; }
     .nav-item.active { color: var(--accent-red); }
     .nav-icon { font-size: 22px; }
 
+    @keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 0.7; } 100% { opacity: 0.3; } }
     @media (min-width: 768px) { .bubble { max-width: 60%; } }
   </style>
 </head>
@@ -182,24 +209,17 @@
 <div id="mainApp" class="hidden">
     
   <div id="reelsView" class="app-view active">
-    <div class="reel-item">
-      <img src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" class="reel-content" alt="Reel image">
-      <div class="reel-ui">
-        <div>
-          <div class="reel-author">@AdminAzlaan</div>
-          <div class="reel-caption">System network upgrade structural testing baseline dashboard alpha v2.0.</div>
-        </div>
-        <div class="reel-actions"><span>❤️</span><span>💬</span></div>
-      </div>
-    </div>
-    <div class="reel-item">
-      <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" class="reel-content" alt="Reel image">
-      <div class="reel-ui">
-        <div>
-          <div class="reel-author">@NetworkCore</div>
-          <div class="reel-caption">Secure dynamic database nodes operational. Swipe up or down natively.</div>
-        </div>
-        <div class="reel-actions"><span>❤️</span><span>💬</span></div>
+    <header class="chat-header">
+      <div class="brand-meta"><div class="brand-logo">ACCESSOR REELS</div></div>
+      <button class="action-pill-btn" id="triggerReelUploadBtn">+ Add Status</button>
+      <input type="file" id="reelFileInput" style="display:none;" accept="image/*,video/*">
+    </header>
+    
+    <div id="reelsContainer">
+      <div class="empty-reels-state" id="reelsEmptyPlaceholder">
+        <div class="empty-icon-terminal">📡</div>
+        <div class="empty-title">NO REELS YET</div>
+        <div class="empty-subtitle">Secure transmission feed currently offline</div>
       </div>
     </div>
   </div>
@@ -207,32 +227,48 @@
   <div id="groupChatView" class="app-view">
     <header class="chat-header">
       <div class="brand-meta">
-        <div class="brand-logo">ACCESSOR NETWORK</div>
+        <div class="brand-logo">GLOBAL MATRIX</div>
         <div class="current-profile">
-          <img id="userHeaderAvatar" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Avatar">
-          <span id="userHeaderName">...</span>
+          <img class="userHeaderAvatarClass" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Avatar">
+          <span class="userHeaderNameClass">...</span>
         </div>
       </div>
     </header>
-
     <main class="chat-body" id="chatDisplayPanel"></main>
-
     <footer class="chat-footer">
       <label for="fileAttachmentInput" class="attach-btn-label"><span>+</span></label>
       <input type="file" id="fileAttachmentInput" style="display: none;">
       <div class="input-wrapper">
-        <input type="text" id="chatTextInput" placeholder="Message...">
+        <input type="text" id="chatTextInput" class="terminal-input-style" placeholder="Message Global...">
       </div>
-      <button id="sendBtn">
+      <button id="sendBtn" class="circle-send-btn">
         <svg viewBox="0 0 24 24"><path d="M2,21L23,12L2,3V10L17,12L2,14V21Z"/></svg>
       </button>
     </footer>
   </div>
 
   <div id="dmView" class="app-view">
-    <div class="view-header-title">DIRECT MESSAGES</div>
-    <div class="placeholder-fallback-text">
-      🔒 Secure peer encryption modules running. Select a custom user matrix point to open a single isolated line channel.
+    <div id="dmUserListState" class="flex-column-view" style="display: flex; flex-direction: column; flex: 1;">
+      <div class="view-header-title">SECURE LINES</div>
+      <div id="dmUserListContainer"></div>
+    </div>
+
+    <div id="dmChatWindowState" class="hidden" style="flex-direction: column; flex: 1;">
+      <div class="view-header-title">
+        <button class="dm-back-btn" id="closeDmChatWindowBtn">📴 Back</button>
+        <span id="activeDmTargetTitleName">Line Connected</span>
+      </div>
+      <main class="chat-body" id="dmChatDisplayPanel"></main>
+      <footer class="chat-footer">
+        <label for="dmFileAttachmentInput" class="attach-btn-label"><span>+</span></label>
+        <input type="file" id="dmFileAttachmentInput" style="display: none;">
+        <div class="input-wrapper">
+          <input type="text" id="dmChatTextInput" class="terminal-input-style" placeholder="Secure Transmission...">
+        </div>
+        <button id="dmSendBtn" class="circle-send-btn">
+          <svg viewBox="0 0 24 24"><path d="M2,21L23,12L2,3V10L17,12L2,14V21Z"/></svg>
+        </button>
+      </footer>
     </div>
   </div>
 
@@ -265,7 +301,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
   import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
-  import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
+  import { getDatabase, ref, push, onChildAdded, set } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
   const firebaseConfig = {
@@ -288,49 +324,73 @@
   const provider = new GoogleAuthProvider();
   const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  // DOM Bindings
+  // Global Binding Architecture
   const loginScreen = document.getElementById("loginScreen");
   const mainApp = document.getElementById("mainApp");
   const loginBtn = document.getElementById("loginBtn");
   const logoutBtn = document.getElementById("logoutBtn");
+  
+  // Group Global Elements
   const chatDisplayPanel = document.getElementById("chatDisplayPanel");
   const chatTextInput = document.getElementById("chatTextInput");
   const sendBtn = document.getElementById("sendBtn");
   const fileAttachmentInput = document.getElementById("fileAttachmentInput");
   
-  const userHeaderAvatar = document.getElementById("userHeaderAvatar");
-  const userHeaderName = document.getElementById("userHeaderName");
+  // DM Private Elements
+  const dmUserListState = document.getElementById("dmUserListState");
+  const dmChatWindowState = document.getElementById("dmChatWindowState");
+  const dmUserListContainer = document.getElementById("dmUserListContainer");
+  const dmChatDisplayPanel = document.getElementById("dmChatDisplayPanel");
+  const dmChatTextInput = document.getElementById("dmChatTextInput");
+  const dmSendBtn = document.getElementById("dmSendBtn");
+  const dmFileAttachmentInput = document.getElementById("dmFileAttachmentInput");
+  const activeDmTargetTitleName = document.getElementById("activeDmTargetTitleName");
+  const closeDmChatWindowBtn = document.getElementById("closeDmChatWindowBtn");
+
+  // Reels Elements
+  const reelsContainer = document.getElementById("reelsContainer");
+  const reelsEmptyPlaceholder = document.getElementById("reelsEmptyPlaceholder");
+  const triggerReelUploadBtn = document.getElementById("triggerReelUploadBtn");
+  const reelFileInput = document.getElementById("reelFileInput");
+
+  // User Profile Layout Profiles
   const largeProfileAvatar = document.getElementById("largeProfileAvatar");
   const profileDisplayName = document.getElementById("profileDisplayName");
   const profileEmailMeta = document.getElementById("profileEmailMeta");
 
   let localUserReference = null;
   let systematicChatInitialized = false;
+  let activeDmRoomId = null;
+  let activeDmListenerReference = null;
 
-  // Process inbound Auth redirect handshakes natively inside your app loop framework
-  getRedirectResult(auth)
-    .then((result) => { if (result?.user) console.log("System authorization tunnel established verified."); })
-    .catch((err) => { console.error("Interruption interface fault sync:", err); });
+  getRedirectResult(auth).catch((err) => { console.error("Handshake loop fault caught:", err); });
 
-  // Persistent Authorization Stream Connection
-  onAuthStateChanged(auth, (user) => {
+  // Persistent Authorization Stream Connection Logic
+  onAuthStateChanged(auth, async (user) => {
     if (user) {
       localUserReference = user;
-      
-      // Update UI Header and Profile Card Layout Metadata Elements
-      const activeAvatar = user.photoURL || 'https://api.dicebear.com/7.x/bottts/svg?seed=fallback';
+      const fallbackUrl = 'https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(user.uid);
+      const activeAvatar = user.photoURL || fallbackUrl;
       const cleanName = user.displayName || user.email.split('@')[0];
+
+      // Cache system presence into database mapping array index matrix points
+      await set(ref(db, `users/${user.uid}`), {
+        uid: user.uid,
+        name: cleanName,
+        photo: activeAvatar,
+        lastActive: Date.now()
+      });
       
-      userHeaderAvatar.src = activeAvatar;
+      document.querySelectorAll(".userHeaderAvatarClass").forEach(img => img.src = activeAvatar);
+      document.querySelectorAll(".userHeaderNameClass").forEach(span => span.innerText = cleanName);
       largeProfileAvatar.src = activeAvatar;
-      userHeaderName.innerText = cleanName;
       profileDisplayName.innerText = cleanName;
       profileEmailMeta.innerText = user.email;
       
       loginScreen.classList.add("hidden");
       mainApp.classList.remove("hidden");
       
-      if (!systematicChatInitialized) bootChatEnginePipeline();
+      if (!systematicChatInitialized) bootSystemSocialCoreEngine();
     } else {
       localUserReference = null;
       mainApp.classList.add("hidden");
@@ -338,100 +398,196 @@
     }
   });
 
-  loginBtn.addEventListener("click", async () => {
-    try { await signInWithRedirect(auth, provider); } catch (err) { alert("Inbound interface fault: " + err.message); }
-  });
+  loginBtn.addEventListener("click", async () => { try { await signInWithRedirect(auth, provider); } catch(e) { alert(e.message); } });
+  logoutBtn.addEventListener("click", async () => { if(confirm("Disconnect sync?")) { await signOut(auth); window.location.reload(); } });
 
-  logoutBtn.addEventListener("click", async () => {
-    if(confirm("Disconnect active secure transmission connection?")) {
-      await signOut(auth);
-      window.location.reload();
-    }
-  });
-
-  // Tab Navigation Handling
+  // Native Navigation Toggling Router
   document.querySelectorAll('.nav-item').forEach(navItem => {
     navItem.addEventListener('click', function() {
       const targetViewId = this.getAttribute('data-target');
-      
       document.querySelectorAll('.app-view').forEach(view => view.classList.remove('active'));
       document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-      
       document.getElementById(targetViewId).classList.add('active');
       this.classList.add('active');
-      
-      // Force scroll reset if jumping back onto Group Chat view layout engine
-      if(targetViewId === 'groupChatView') {
-        chatDisplayPanel.scrollTop = chatDisplayPanel.scrollHeight;
-      }
+      if(targetViewId === 'groupChatView') chatDisplayPanel.scrollTop = chatDisplayPanel.scrollHeight;
+      if(targetViewId === 'dmView' && activeDmRoomId) dmChatDisplayPanel.scrollTop = dmChatDisplayPanel.scrollHeight;
     });
   });
 
-  // Core Chat Execution Systems
-  function bootChatEnginePipeline() {
+  function bootSystemSocialCoreEngine() {
     systematicChatInitialized = true;
+
+    // --- PIPELINE 1: GLOBAL GROUP CHAT RECOVERY ---
     onChildAdded(ref(db, 'messages'), (snapshot) => {
-      if (snapshot.val()) renderMessageBubble(snapshot.val());
+      if (snapshot.val()) renderMessageBubble(snapshot.val(), chatDisplayPanel);
     });
-    sendBtn.onclick = executeTextTransmission;
-    chatTextInput.onkeypress = (e) => { if (e.key === 'Enter') executeTextTransmission(); };
-    fileAttachmentInput.addEventListener("change", executeFileAttachmentUpload);
+    sendBtn.onclick = () => executeTextTransmission('messages', chatTextInput);
+    chatTextInput.onkeypress = (e) => { if (e.key === 'Enter') executeTextTransmission('messages', chatTextInput); };
+    fileAttachmentInput.addEventListener("change", (e) => executeFileAttachmentUpload(e, 'messages', fileAttachmentInput, chatTextInput));
+
+    // --- PIPELINE 2: PRIVATE DM USER REGISTRY ROUTER ---
+    onChildAdded(ref(db, 'users'), (snapshot) => {
+      const userData = snapshot.val();
+      if (userData && userData.uid !== localUserReference.uid) {
+        renderUserMatrixItem(userData);
+      }
+    });
+
+    closeDmChatWindowBtn.onclick = () => {
+      dmChatWindowState.classList.add("hidden");
+      dmUserListState.style.display = "flex";
+      activeDmRoomId = null;
+    };
+
+    dmSendBtn.onclick = () => executeTextTransmission(`direct_messages/${activeDmRoomId}`, dmChatTextInput);
+    dmChatTextInput.onkeypress = (e) => { if (e.key === 'Enter') executeTextTransmission(`direct_messages/${activeDmRoomId}`, dmChatTextInput); };
+    dmFileAttachmentInput.addEventListener("change", (e) => executeFileAttachmentUpload(e, `direct_messages/${activeDmRoomId}`, dmFileAttachmentInput, dmChatTextInput));
+
+    // --- PIPELINE 3: DYNAMIC REELS ENGINE FETCHING ---
+    onChildAdded(ref(db, 'reels'), (snapshot) => {
+      const data = snapshot.val();
+      if(data) {
+        if(reelsEmptyPlaceholder) reelsEmptyPlaceholder.remove();
+        renderReelAsset(data);
+      }
+    });
+
+    triggerReelUploadBtn.onclick = () => reelFileInput.click();
+    reelFileInput.addEventListener("change", executeReelAttachmentUpload);
   }
 
-  async function executeTextTransmission() {
-    const textPayload = chatTextInput.value.trim();
+  // Text Transmission Logic
+  async function executeTextTransmission(targetNodePath, inputElement) {
+    const textPayload = inputElement.value.trim();
     if (!textPayload || !localUserReference) return;
-
-    chatTextInput.value = ''; 
+    inputElement.value = ''; 
     try {
-      await push(ref(db, 'messages'), {
+      await push(ref(db, targetNodePath), {
         uid: localUserReference.uid,
         senderName: localUserReference.displayName || localUserReference.email,
         senderPhoto: localUserReference.photoURL || '',
         text: textPayload,
         timestamp: Date.now()
       });
-    } catch (err) { console.error("Database connection block fault:", err); }
+    } catch (err) { console.error("Sync block fault:", err); }
   }
 
-  async function executeFileAttachmentUpload(e) {
+  // Supabase Asset Upload Controller
+  async function executeFileAttachmentUpload(e, targetNodePath, fileInput, textInput) {
     const file = e.target.files[0];
     if (!file || !localUserReference) return;
 
-    chatTextInput.disabled = true;
-    chatTextInput.placeholder = `Uploading asset: ${file.name}...`;
+    textInput.disabled = true;
+    textInput.placeholder = `Uploading structural asset: ${file.name}...`;
     const sanitizedFileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
 
     try {
-      const { data, error } = await supabaseClient.storage
-        .from('new_photos')
-        .upload(sanitizedFileName, file, { cacheControl: '3600', upsert: true });
-        
+      const { error } = await supabaseClient.storage.from('new_photos').upload(sanitizedFileName, file, { cacheControl: '3600', upsert: true });
       if (error) throw error;
 
       const { data: publicUrlData } = supabaseClient.storage.from('new_photos').getPublicUrl(sanitizedFileName);
-      const publicAssetUrl = publicUrlData.publicUrl;
-
-      await push(ref(db, 'messages'), {
+      await push(ref(db, targetNodePath), {
         uid: localUserReference.uid,
         senderName: localUserReference.displayName || localUserReference.email,
         senderPhoto: localUserReference.photoURL || '',
         text: `Shared a file`,
-        fileUrl: publicAssetUrl,
+        fileUrl: publicUrlData.publicUrl,
         fileName: file.name,
         fileType: file.type,
         timestamp: Date.now()
       });
-    } catch (err) {
-      alert("Storage asset delivery abort: " + err.message);
-    } finally {
-      fileAttachmentInput.value = '';
-      chatTextInput.disabled = false;
-      chatTextInput.placeholder = "Message...";
-    }
+    } catch (err) { alert("Asset upload crash: " + err.message); } 
+    finally { fileInput.value = ''; textInput.disabled = false; textInput.placeholder = "Message..."; }
   }
 
-  function renderMessageBubble(msg) {
+  // Custom Direct Messaging Room Switch Handler
+  function initializePrivateChatRoomTunnel(targetUser) {
+    dmUserListState.style.display = "none";
+    dmChatWindowState.classList.remove("hidden");
+    dmChatWindowState.style.display = "flex";
+    activeDmTargetTitleName.innerText = targetUser.name;
+    
+    dmChatDisplayPanel.innerHTML = '';
+    const myUid = localUserReference.uid;
+    activeDmRoomId = myUid < targetUser.uid ? `${myUid}_${targetUser.uid}` : `${targetUser.uid}_${myUid}`;
+
+    // Detach any existing localized routing trees to optimize performance
+    if(activeDmListenerReference) activeDmListenerReference();
+
+    // Query private channels mapping path arrays
+    onChildAdded(ref(db, `direct_messages/${activeDmRoomId}`), (snapshot) => {
+      if (snapshot.val() && activeDmRoomId) {
+        renderMessageBubble(snapshot.val(), dmChatDisplayPanel);
+      }
+    });
+  }
+
+  // Reels Upload Module logic routing tree path
+  async function executeReelAttachmentUpload(e) {
+    const file = e.target.files[0];
+    if (!file || !localUserReference) return;
+
+    triggerReelUploadBtn.innerText = "Syncing...";
+    triggerReelUploadBtn.disabled = true;
+    const sanitizedFileName = `reel_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
+
+    try {
+      const { error } = await supabaseClient.storage.from('new_photos').upload(sanitizedFileName, file, { cacheControl: '3600', upsert: true });
+      if (error) throw error;
+
+      const { data: publicUrlData } = supabaseClient.storage.from('new_photos').getPublicUrl(sanitizedFileName);
+      const textMetaPrompt = prompt("Add a short transmission decryption log (Caption):") || "";
+
+      await push(ref(db, 'reels'), {
+        uid: localUserReference.uid,
+        senderName: localUserReference.displayName || localUserReference.email,
+        fileUrl: publicUrlData.publicUrl,
+        fileType: file.type,
+        caption: textMetaPrompt,
+        timestamp: Date.now()
+      });
+    } catch (err) { alert("Reel asset integration fault: " + err.message); } 
+    finally { reelFileInput.value = ''; triggerReelUploadBtn.innerText = "+ Add Status"; triggerReelUploadBtn.disabled = false; }
+  }
+
+  // UI Compilation Element Builders
+  function renderUserMatrixItem(user) {
+    const div = document.createElement("div");
+    div.className = "user-matrix-card";
+    div.innerHTML = `
+      <img src="${user.photo}" class="user-matrix-avatar" alt="User image">
+      <div class="user-matrix-info">
+        <span class="user-matrix-name">${user.name}</span>
+        <span class="user-matrix-status online">🟢 System Online Line Node</span>
+      </div>
+    `;
+    div.onclick = () => initializePrivateChatRoomTunnel(user);
+    dmUserListContainer.appendChild(div);
+  }
+
+  function renderReelAsset(reel) {
+    const div = document.createElement("div");
+    div.className = "reel-item";
+    
+    let mediaTemplate = `<img src="${reel.fileUrl}" class="reel-content" loading="lazy">`;
+    if(reel.fileType && reel.fileType.startsWith('video/')) {
+      mediaTemplate = `<video src="${reel.fileUrl}" class="reel-content" autoplay loop muted playsinline></video>`;
+    }
+
+    div.innerHTML = `
+      ${mediaTemplate}
+      <div class="reel-ui">
+        <div>
+          <div class="reel-author">@${reel.senderName.split('@')[0]}</div>
+          <div class="reel-caption">${reel.caption}</div>
+        </div>
+        <div class="reel-actions"><span>❤️</span><span>💬</span></div>
+      </div>
+    `;
+    reelsContainer.appendChild(div);
+  }
+
+  function renderMessageBubble(msg, targetContainer) {
     const isMe = msg.uid === localUserReference?.uid;
     const directionClass = isMe ? 'me' : 'them';
     const fallbackUrl = 'https://api.dicebear.com/7.x/identicon/svg?seed=' + encodeURIComponent(msg.senderName);
@@ -448,6 +604,8 @@
     if (msg.fileUrl) {
       if (msg.fileType && msg.fileType.startsWith('image/')) {
         attachmentTemplate = `<div class="msg-media"><a href="${msg.fileUrl}" target="_blank"><img src="${msg.fileUrl}" loading="lazy"></a></div>`;
+      } else if (msg.fileType && msg.fileType.startsWith('video/')) {
+        attachmentTemplate = `<div class="msg-media"><video src="${msg.fileUrl}" controls linear></video></div>`;
       } else {
         attachmentTemplate = `
           <div class="msg-media">
@@ -469,8 +627,8 @@
       </div>`;
 
     row.innerHTML = isMe ? bubbleContent + avatarTemplate : avatarTemplate + bubbleContent;
-    chatDisplayPanel.appendChild(row);
-    chatDisplayPanel.scrollTop = chatDisplayPanel.scrollHeight;
+    targetContainer.appendChild(row);
+    targetContainer.scrollTop = targetContainer.scrollHeight;
   }
 </script>
 </body>
