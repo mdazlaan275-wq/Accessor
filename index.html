@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Accessor - Ultimate Social & Chat</title>
+  <title>Accessor - Core Matrix</title>
   <style>
     :root {
       --bg-main: #060606;
@@ -52,7 +52,7 @@
       transition: transform 0.2s, box-shadow 0.2s; margin-top: 20px;
     }
 
-    /* ================= MAIN ENGINE FRAMEWORK ================= */
+    /* ================= MAIN ENGINE NAVIGATION LAYOUT ================= */
     #mainApp { height: 100%; display: flex; flex-direction: column; }
     
     .app-view {
@@ -62,11 +62,11 @@
     }
     .app-view.active { display: flex; flex-direction: column; }
 
-    /* Headers */
+    /* Top Navigation Pinned Bar Headers */
     .chat-header {
       background: var(--bg-panel); border-bottom: 2px solid var(--accent-red);
       padding: 10px 15px; display: flex; align-items: center; justify-content: space-between;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 10; height: 60px; box-shrink: 0;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 10; height: 60px; flex-shrink: 0;
     }
 
     .brand-meta { display: flex; align-items: center; gap: 10px; }
@@ -79,9 +79,8 @@
     .current-profile img { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--accent-orange); object-fit: cover; }
     .current-profile span { font-size: 12px; color: var(--accent-orange); font-weight: 600; max-width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    /* ================= 1. DYNAMIC REELS VIEW ================= */
+    /* ================= 1. REELS FEED VIEW ================= */
     #reelsContainer { flex: 1; scroll-snap-type: y mandatory; overflow-y: auto; background: #000; height: 100%; }
-    
     .reel-item {
       height: 100%; width: 100%; scroll-snap-align: start; position: relative;
       display: flex; align-items: center; justify-content: center; background: #000;
@@ -97,7 +96,6 @@
     .reel-caption { font-size: 13px; color: #fff; }
     .reel-actions { display: flex; flex-direction: column; gap: 15px; font-size: 24px; color: white; }
 
-    /* Professional Reel Empty State */
     .empty-reels-state {
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       height: 100%; width: 100%; text-align: center; padding: 30px; box-sizing: border-box;
@@ -114,7 +112,7 @@
     }
     .action-pill-btn:active { background: var(--accent-red); color: white; }
 
-    /* ================= COMMON CHAT LOGIC INTERFACES ================= */
+    /* ================= MESSAGING ROOM ENGINES ================= */
     .chat-body {
       flex: 1; overflow-y: auto; padding: 15px;
       background: linear-gradient(rgba(6, 6, 6, 0.94), rgba(6, 6, 6, 0.94)), url('https://i.imgur.com/8N693aX.png');
@@ -148,7 +146,7 @@
 
     .chat-footer {
       background: var(--bg-panel); padding: 10px; display: flex; align-items: center; gap: 8px;
-      border-top: 1px solid #222; box-shadow: 0 -4px 15px rgba(0,0,0,0.6); box-sizing: border-box; box-shrink: 0;
+      border-top: 1px solid #222; box-shadow: 0 -4px 15px rgba(0,0,0,0.6); box-sizing: border-box; flex-shrink: 0;
     }
     .attach-btn-label { width: 40px; height: 40px; background: #1f1f1f; border: 1px solid #333; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--accent-red); flex-shrink: 0; }
     .attach-btn-label span { font-size: 26px; line-height: 1; margin-top: -2px; }
@@ -158,23 +156,30 @@
     .circle-send-btn { background: linear-gradient(135deg, var(--accent-red), #b30000); border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .circle-send-btn svg { width: 18px; height: 18px; fill: white; margin-left: 2px; }
 
-    /* ================= 3. FUNCTIONAL P2P DIRECT MESSAGE SYSTEM ================= */
+    /* ================= 3. PRIVATE P2P DIRECT MESSAGE SYSTEM ================= */
     .view-header-title { padding: 15px; background: var(--bg-panel); border-bottom: 1px solid #222; text-align: center; font-weight: bold; letter-spacing: 1px; height: 60px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; position: relative; }
     .dm-back-btn { position: absolute; left: 15px; background: #222; border: 1px solid #444; color: white; padding: 4px 10px; border-radius: 5px; font-size: 12px; cursor: pointer; }
     
     #dmUserListContainer { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
     .user-matrix-card {
       background: var(--bg-panel); border: 1px solid #222; border-radius: 12px; padding: 12px;
-      display: flex; align-items: center; gap: 12px; cursor: pointer; transition: border-color 0.2s;
+      display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: border-color 0.2s;
     }
     .user-matrix-card:active { border-color: var(--accent-red); background: #161616; }
+    .user-matrix-left { display: flex; align-items: center; gap: 12px; }
     .user-matrix-avatar { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #444; object-fit: cover; }
     .user-matrix-info { display: flex; flex-direction: column; }
     .user-matrix-name { font-weight: bold; font-size: 14px; color: white; }
-    .user-matrix-status { font-size: 11px; color: #555; margin-top: 2px; }
-    .user-matrix-status.online { color: #00ff66; }
+    .user-matrix-status { font-size: 11px; color: #00ff66; margin-top: 2px; }
+    
+    /* Green Unread Point Design Matrix */
+    .user-list-unread-dot {
+      width: 18px; height: 18px; background: #00ff66; border-radius: 50%;
+      color: black; font-size: 10px; font-weight: 900; display: flex;
+      align-items: center; justify-content: center; box-shadow: 0 0 10px #00ff66;
+    }
 
-    /* ================= 4. ACCOUNT SYSTEM USER PROFILE ================= */
+    /* ================= 4. ACCOUNT CONFIGURATION VIEW ================= */
     #profileView { text-align: center; background: #0b0b0b; height: 100%; }
     .profile-card-layout { padding: 40px 20px; display: flex; flex-direction: column; align-items: center; }
     .large-profile-avatar { width: 110px; height: 110px; border-radius: 50%; border: 3px solid var(--accent-red); object-fit: cover; margin-bottom: 15px; box-shadow: 0 0 20px rgba(255,45,45,0.3); }
@@ -186,11 +191,19 @@
     .bottom-nav {
       height: var(--nav-height); background: var(--bg-panel); border-top: 1px solid #222;
       display: flex; justify-content: space-around; align-items: center;
-      padding-bottom: env(safe-area-inset-bottom); box-sizing: border-box; z-index: 100; box-shrink: 0;
+      padding-bottom: env(safe-area-inset-bottom); box-sizing: border-box; z-index: 100; flex-shrink: 0;
     }
-    .nav-item { color: #555; font-size: 11px; font-weight: bold; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; width: 25%; text-align: center; }
+    .nav-item { color: #555; font-size: 11px; font-weight: bold; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; width: 25%; text-align: center; position: relative; }
     .nav-item.active { color: var(--accent-red); }
     .nav-icon { font-size: 22px; }
+
+    /* Nav Indicator Badges */
+    .nav-green-alert-badge {
+      position: absolute; top: 2px; right: 22%; background: #00ff66; color: #000;
+      font-size: 10px; font-weight: 900; min-width: 16px; height: 16px;
+      border-radius: 10px; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 10px #00ff66; padding: 0 2px; box-sizing: border-box;
+    }
 
     @keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 0.7; } 100% { opacity: 0.3; } }
     @media (min-width: 768px) { .bubble { max-width: 60%; } }
@@ -248,7 +261,7 @@
   </div>
 
   <div id="dmView" class="app-view">
-    <div id="dmUserListState" class="flex-column-view" style="display: flex; flex-direction: column; flex: 1;">
+    <div id="dmUserListState" style="display: flex; flex-direction: column; flex: 1;">
       <div class="view-header-title">SECURE LINES</div>
       <div id="dmUserListContainer"></div>
     </div>
@@ -289,8 +302,9 @@
     <div class="nav-item" data-target="groupChatView">
       <span class="nav-icon">🌍</span><span>Group</span>
     </div>
-    <div class="nav-item" data-target="dmView">
+    <div class="nav-item" data-target="dmView" id="navDmTabElement">
       <span class="nav-icon">💬</span><span>Chat</span>
+      <span class="nav-green-alert-badge hidden" id="globalDmNavBadge">1</span>
     </div>
     <div class="nav-item" data-target="profileView">
       <span class="nav-icon">👤</span><span>Profile</span>
@@ -301,7 +315,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
   import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
-  import { getDatabase, ref, push, onChildAdded, set } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
+  import { getDatabase, ref, push, onChildAdded, set, onValue } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
   const firebaseConfig = {
@@ -324,13 +338,13 @@
   const provider = new GoogleAuthProvider();
   const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  // Global Binding Architecture
+  // App DOM Bindings
   const loginScreen = document.getElementById("loginScreen");
   const mainApp = document.getElementById("mainApp");
   const loginBtn = document.getElementById("loginBtn");
   const logoutBtn = document.getElementById("logoutBtn");
   
-  // Group Global Elements
+  // Group Elements
   const chatDisplayPanel = document.getElementById("chatDisplayPanel");
   const chatTextInput = document.getElementById("chatTextInput");
   const sendBtn = document.getElementById("sendBtn");
@@ -346,6 +360,7 @@
   const dmFileAttachmentInput = document.getElementById("dmFileAttachmentInput");
   const activeDmTargetTitleName = document.getElementById("activeDmTargetTitleName");
   const closeDmChatWindowBtn = document.getElementById("closeDmChatWindowBtn");
+  const globalDmNavBadge = document.getElementById("globalDmNavBadge");
 
   // Reels Elements
   const reelsContainer = document.getElementById("reelsContainer");
@@ -353,17 +368,20 @@
   const triggerReelUploadBtn = document.getElementById("triggerReelUploadBtn");
   const reelFileInput = document.getElementById("reelFileInput");
 
-  // User Profile Layout Profiles
+  // Profile Elements
   const largeProfileAvatar = document.getElementById("largeProfileAvatar");
   const profileDisplayName = document.getElementById("profileDisplayName");
   const profileEmailMeta = document.getElementById("profileEmailMeta");
 
+  // State Management Engine Elements
   let localUserReference = null;
   let systematicChatInitialized = false;
   let activeDmRoomId = null;
-  let activeDmListenerReference = null;
+  let currentActiveTabId = "reelsView";
+  let unreadRoomsMap = {}; // Tracks UIDs of channels sending unread payloads
+  const appBootTimestamp = Date.now(); // Clock marker to drop old alerts during load synchronization
 
-  getRedirectResult(auth).catch((err) => { console.error("Handshake loop fault caught:", err); });
+  getRedirectResult(auth).catch((err) => { console.error("Handshake interruption logged:", err); });
 
   // Persistent Authorization Stream Connection Logic
   onAuthStateChanged(auth, async (user) => {
@@ -373,7 +391,7 @@
       const activeAvatar = user.photoURL || fallbackUrl;
       const cleanName = user.displayName || user.email.split('@')[0];
 
-      // Cache system presence into database mapping array index matrix points
+      // Insert/Refresh current presence data mapping point arrays inside nodes
       await set(ref(db, `users/${user.uid}`), {
         uid: user.uid,
         name: cleanName,
@@ -399,25 +417,30 @@
   });
 
   loginBtn.addEventListener("click", async () => { try { await signInWithRedirect(auth, provider); } catch(e) { alert(e.message); } });
-  logoutBtn.addEventListener("click", async () => { if(confirm("Disconnect sync?")) { await signOut(auth); window.location.reload(); } });
+  logoutBtn.addEventListener("click", async () => { if(confirm("Disconnect sync session?")) { await signOut(auth); window.location.reload(); } });
 
-  // Native Navigation Toggling Router
+  // Navigation Tab Management
   document.querySelectorAll('.nav-item').forEach(navItem => {
     navItem.addEventListener('click', function() {
-      const targetViewId = this.getAttribute('data-target');
+      currentActiveTabId = this.getAttribute('data-target');
+      
       document.querySelectorAll('.app-view').forEach(view => view.classList.remove('active'));
       document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-      document.getElementById(targetViewId).classList.add('active');
+      
+      document.getElementById(currentActiveTabId).classList.add('active');
       this.classList.add('active');
-      if(targetViewId === 'groupChatView') chatDisplayPanel.scrollTop = chatDisplayPanel.scrollHeight;
-      if(targetViewId === 'dmView' && activeDmRoomId) dmChatDisplayPanel.scrollTop = dmChatDisplayPanel.scrollHeight;
+      
+      if(currentActiveTabId === 'groupChatView') chatDisplayPanel.scrollTop = chatDisplayPanel.scrollHeight;
+      if(currentActiveTabId === 'dmView' && activeDmRoomId) {
+        dmChatDisplayPanel.scrollTop = dmChatDisplayPanel.scrollHeight;
+      }
     });
   });
 
   function bootSystemSocialCoreEngine() {
     systematicChatInitialized = true;
 
-    // --- PIPELINE 1: GLOBAL GROUP CHAT RECOVERY ---
+    // --- CHANNEL 1: GLOBAL GROUP ROOM WORKSPACE ---
     onChildAdded(ref(db, 'messages'), (snapshot) => {
       if (snapshot.val()) renderMessageBubble(snapshot.val(), chatDisplayPanel);
     });
@@ -425,16 +448,27 @@
     chatTextInput.onkeypress = (e) => { if (e.key === 'Enter') executeTextTransmission('messages', chatTextInput); };
     fileAttachmentInput.addEventListener("change", (e) => executeFileAttachmentUpload(e, 'messages', fileAttachmentInput, chatTextInput));
 
-    // --- PIPELINE 2: PRIVATE DM USER REGISTRY ROUTER ---
-    onChildAdded(ref(db, 'users'), (snapshot) => {
-      const userData = snapshot.val();
-      if (userData && userData.uid !== localUserReference.uid) {
-        renderUserMatrixItem(userData);
+    // --- CHANNEL 2: REWIRED LIVE VALUE DIRECTORY NODE ---
+    onValue(ref(db, 'users'), (snapshot) => {
+      dmUserListContainer.innerHTML = '';
+      let executionHasPeers = false;
+      
+      snapshot.forEach((childSnapshot) => {
+        const userData = childSnapshot.val();
+        if (userData && userData.uid !== localUserReference.uid) {
+          executionHasPeers = true;
+          renderUserMatrixItem(userData);
+        }
+      });
+
+      if (!executionHasPeers) {
+        dmUserListContainer.innerHTML = '<div class="placeholder-fallback-text">🔒 No other peer connection streams detected on the grid.</div>';
       }
     });
 
     closeDmChatWindowBtn.onclick = () => {
       dmChatWindowState.classList.add("hidden");
+      dmChatWindowState.style.display = "none";
       dmUserListState.style.display = "flex";
       activeDmRoomId = null;
     };
@@ -443,7 +477,34 @@
     dmChatTextInput.onkeypress = (e) => { if (e.key === 'Enter') executeTextTransmission(`direct_messages/${activeDmRoomId}`, dmChatTextInput); };
     dmFileAttachmentInput.addEventListener("change", (e) => executeFileAttachmentUpload(e, `direct_messages/${activeDmRoomId}`, dmFileAttachmentInput, dmChatTextInput));
 
-    // --- PIPELINE 3: DYNAMIC REELS ENGINE FETCHING ---
+    // --- CHANNEL 3: REAL-TIME NOTIFICATION ENGINE ---
+    onChildAdded(ref(db, 'direct_messages'), (roomSnapshot) => {
+      const roomId = roomSnapshot.key;
+      // Filter out transmission loops not addressing your specific routing ID
+      if (!roomId.includes(localUserReference.uid)) return;
+
+      // Bind data listener trees to incoming room packet matrices
+      onChildAdded(ref(db, `direct_messages/${roomId}`), (msgSnapshot) => {
+        const msg = msgSnapshot.val();
+        if (!msg) return;
+
+        // Condition checks: Message from peer, arriving post-boot, while user is elsewhere
+        if (msg.uid !== localUserReference.uid && msg.timestamp > appBootTimestamp) {
+          if (currentActiveTabId !== 'dmView' || activeDmRoomId !== roomId) {
+            const externalSenderUid = roomId.replace(localUserReference.uid, "").replace("_", "");
+            unreadRoomsMap[externalSenderUid] = true;
+            evaluateNotificationBadgeEngine();
+          }
+        }
+        
+        // Live route appending if window matches target ID
+        if (activeDmRoomId === roomId) {
+          renderMessageBubble(msg, dmChatDisplayPanel);
+        }
+      });
+    });
+
+    // --- CHANNEL 4: REELS PIPELINE SYNC ---
     onChildAdded(ref(db, 'reels'), (snapshot) => {
       const data = snapshot.val();
       if(data) {
@@ -456,7 +517,7 @@
     reelFileInput.addEventListener("change", executeReelAttachmentUpload);
   }
 
-  // Text Transmission Logic
+  // Text Engine Subsystems
   async function executeTextTransmission(targetNodePath, inputElement) {
     const textPayload = inputElement.value.trim();
     if (!textPayload || !localUserReference) return;
@@ -469,16 +530,16 @@
         text: textPayload,
         timestamp: Date.now()
       });
-    } catch (err) { console.error("Sync block fault:", err); }
+    } catch (err) { console.error("Sync fault caught:", err); }
   }
 
-  // Supabase Asset Upload Controller
+  // File Delivery Storage Subsystems
   async function executeFileAttachmentUpload(e, targetNodePath, fileInput, textInput) {
     const file = e.target.files[0];
     if (!file || !localUserReference) return;
 
     textInput.disabled = true;
-    textInput.placeholder = `Uploading structural asset: ${file.name}...`;
+    textInput.placeholder = `Uploading asset: ${file.name}...`;
     const sanitizedFileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
 
     try {
@@ -496,12 +557,12 @@
         fileType: file.type,
         timestamp: Date.now()
       });
-    } catch (err) { alert("Asset upload crash: " + err.message); } 
+    } catch (err) { alert("Asset storage abort: " + err.message); } 
     finally { fileInput.value = ''; textInput.disabled = false; textInput.placeholder = "Message..."; }
   }
 
-  // Custom Direct Messaging Room Switch Handler
-  function initializePrivateChatRoomTunnel(targetUser) {
+  // Isolated Encrypted Room Routing Switches
+  window.initializePrivateChatRoomTunnel = function(targetUser) {
     dmUserListState.style.display = "none";
     dmChatWindowState.classList.remove("hidden");
     dmChatWindowState.style.display = "flex";
@@ -511,18 +572,40 @@
     const myUid = localUserReference.uid;
     activeDmRoomId = myUid < targetUser.uid ? `${myUid}_${targetUser.uid}` : `${targetUser.uid}_${myUid}`;
 
-    // Detach any existing localized routing trees to optimize performance
-    if(activeDmListenerReference) activeDmListenerReference();
+    // Flush any unread alerts pointing to this peer's signature ID
+    delete unreadRoomsMap[targetUser.uid];
+    evaluateNotificationBadgeEngine();
 
-    // Query private channels mapping path arrays
-    onChildAdded(ref(db, `direct_messages/${activeDmRoomId}`), (snapshot) => {
-      if (snapshot.val() && activeDmRoomId) {
-        renderMessageBubble(snapshot.val(), dmChatDisplayPanel);
-      }
+    // Query database history logs manually to populate historical line records on switch in
+    onValue(ref(db, `direct_messages/${activeDmRoomId}`), (snapshot) => {
+      dmChatDisplayPanel.innerHTML = '';
+      snapshot.forEach((childSnap) => {
+        const msg = childSnap.val();
+        if(msg) renderMessageBubble(msg, dmChatDisplayPanel);
+      });
+    }, { onlyOnce: true });
+  };
+
+  // Notification Array Engine Evaluator
+  function evaluateNotificationBadgeEngine() {
+    const totalUnreadChannelsCount = Object.keys(unreadRoomsMap).length;
+    
+    // Toggle Bottom Nav Indicator
+    if (totalUnreadChannelsCount > 0) {
+      globalDmNavBadge.innerText = "1";
+      globalDmNavBadge.classList.remove("hidden");
+    } else {
+      globalDmNavBadge.classList.add("hidden");
+    }
+
+    // Toggle specific item points in directory container array loops
+    Object.keys(unreadRoomsMap).forEach(uid => {
+      const trackingIndicatorNode = document.getElementById(`unread-point-${uid}`);
+      if (trackingIndicatorNode) trackingIndicatorNode.classList.remove("hidden");
     });
   }
 
-  // Reels Upload Module logic routing tree path
+  // Reels Engine Pipeline Media Router
   async function executeReelAttachmentUpload(e) {
     const file = e.target.files[0];
     if (!file || !localUserReference) return;
@@ -536,7 +619,7 @@
       if (error) throw error;
 
       const { data: publicUrlData } = supabaseClient.storage.from('new_photos').getPublicUrl(sanitizedFileName);
-      const textMetaPrompt = prompt("Add a short transmission decryption log (Caption):") || "";
+      const textMetaPrompt = prompt("Add status description log (Caption):") || "";
 
       await push(ref(db, 'reels'), {
         uid: localUserReference.uid,
@@ -546,20 +629,27 @@
         caption: textMetaPrompt,
         timestamp: Date.now()
       });
-    } catch (err) { alert("Reel asset integration fault: " + err.message); } 
+    } catch (err) { alert("Reel upload failure: " + err.message); } 
     finally { reelFileInput.value = ''; triggerReelUploadBtn.innerText = "+ Add Status"; triggerReelUploadBtn.disabled = false; }
   }
 
-  // UI Compilation Element Builders
+  // Dynamic UI Element Builders
   function renderUserMatrixItem(user) {
     const div = document.createElement("div");
     div.className = "user-matrix-card";
+    
+    // Check if item contains an unread mapping trace flag
+    const containsAlertMarker = unreadRoomsMap[user.uid] ? "" : "hidden";
+
     div.innerHTML = `
-      <img src="${user.photo}" class="user-matrix-avatar" alt="User image">
-      <div class="user-matrix-info">
-        <span class="user-matrix-name">${user.name}</span>
-        <span class="user-matrix-status online">🟢 System Online Line Node</span>
+      <div class="user-matrix-left">
+        <img src="${user.photo}" class="user-matrix-avatar" alt="Avatar">
+        <div class="user-matrix-info">
+          <span class="user-matrix-name">${user.name}</span>
+          <span class="user-matrix-status">🟢 Online</span>
+        </div>
       </div>
+      <span class="user-list-unread-dot ${containsAlertMarker}" id="unread-point-${user.uid}">1</span>
     `;
     div.onclick = () => initializePrivateChatRoomTunnel(user);
     dmUserListContainer.appendChild(div);
@@ -605,7 +695,7 @@
       if (msg.fileType && msg.fileType.startsWith('image/')) {
         attachmentTemplate = `<div class="msg-media"><a href="${msg.fileUrl}" target="_blank"><img src="${msg.fileUrl}" loading="lazy"></a></div>`;
       } else if (msg.fileType && msg.fileType.startsWith('video/')) {
-        attachmentTemplate = `<div class="msg-media"><video src="${msg.fileUrl}" controls linear></video></div>`;
+        attachmentTemplate = `<div class="msg-media"><video src="${msg.fileUrl}" controls playsinline></video></div>`;
       } else {
         attachmentTemplate = `
           <div class="msg-media">
