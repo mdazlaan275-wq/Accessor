@@ -45,12 +45,33 @@
       color: white; text-shadow: 0 0 10px rgba(255, 45, 45, 0.6);
     }
 
-    #loginBtn {
+    .primary-action-btn {
       width: 100%; padding: 14px 20px; font-size: 16px; font-weight: bold; color: white;
       background: linear-gradient(135deg, var(--accent-red), #ff7300); border: none;
       border-radius: 30px; cursor: pointer; box-shadow: 0 0 20px rgba(255, 70, 0, 0.6);
-      transition: transform 0.2s, box-shadow 0.2s; margin-top: 20px;
+      transition: transform 0.2s, box-shadow 0.2s; margin-top: 4px;
     }
+    .primary-action-btn:disabled { opacity: 0.6; cursor: default; }
+
+    #loginBtn {
+      width: 100%; padding: 12px 20px; font-size: 14px; font-weight: 600; color: var(--text-light);
+      background: transparent; border: 1px solid #444; border-radius: 30px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: border-color 0.2s;
+    }
+    #loginBtn:active { border-color: var(--accent-red); }
+
+    .auth-field {
+      width: 100%; margin-bottom: 10px; text-align: left; box-sizing: border-box;
+    }
+    .auth-error {
+      background: #3a0d0d; border: 1px solid var(--accent-red); color: #ffb4b4;
+      font-size: 12px; padding: 8px 12px; border-radius: 8px; margin-bottom: 15px; text-align: left;
+    }
+    .auth-toggle-row { margin-top: 14px; font-size: 12px; color: #888; }
+    .auth-toggle-row b { color: var(--accent-orange); cursor: pointer; }
+    .auth-divider { display: flex; align-items: center; gap: 10px; margin: 20px 0; color: #444; font-size: 11px; letter-spacing: 2px; }
+    .auth-divider::before, .auth-divider::after { content: ""; flex: 1; height: 1px; background: #2a2a2a; }
 
     /* ================= MAIN ENGINE NAVIGATION LAYOUT ================= */
     #mainApp { height: 100%; display: flex; flex-direction: column; }
@@ -227,6 +248,18 @@
   <div class="login-card">
     <h1>ACCESSOR</h1>
     <p>Secure Peer-to-Peer Transmission</p>
+
+    <div id="authError" class="auth-error hidden"></div>
+
+    <form id="emailAuthForm">
+      <input type="email" id="authEmailInput" class="terminal-input-style auth-field" placeholder="Email" autocomplete="username" required>
+      <input type="password" id="authPasswordInput" class="terminal-input-style auth-field" placeholder="Password" autocomplete="current-password" required>
+      <button type="submit" id="emailAuthSubmitBtn" class="primary-action-btn">Sign In</button>
+    </form>
+    <div class="auth-toggle-row" id="authToggleModeBtn">Need an account? <b>Sign Up</b></div>
+
+    <div class="auth-divider"><span>OR</span></div>
+
     <button id="loginBtn">Sign In With Google</button>
   </div>
 </div>
@@ -326,7 +359,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup, getRedirectResult, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithCredential, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
   import { getDatabase, ref, push, onChildAdded, set, onValue } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
@@ -355,6 +388,12 @@
   const mainApp = document.getElementById("mainApp");
   const loginBtn = document.getElementById("loginBtn");
   const logoutBtn = document.getElementById("logoutBtn");
+  const authError = document.getElementById("authError");
+  const emailAuthForm = document.getElementById("emailAuthForm");
+  const authEmailInput = document.getElementById("authEmailInput");
+  const authPasswordInput = document.getElementById("authPasswordInput");
+  const emailAuthSubmitBtn = document.getElementById("emailAuthSubmitBtn");
+  const authToggleModeBtn = document.getElementById("authToggleModeBtn");
   
   // Group Elements
   const chatDisplayPanel = document.getElementById("chatDisplayPanel");
@@ -425,15 +464,93 @@
     }
   });
 
-  // Bulletproof Cross-Platform Login Controller - FIXED to use Popup to prevent init.json 404
-  loginBtn.addEventListener("click", async () => { 
-    try { 
-      // Using Popup by default bypasses the `init.json` 404 issue on GitHub pages entirely.
-      await signInWithPopup(auth, provider); 
-    } catch(e) { 
-      alert("Authorization Block: " + e.message); 
-    } 
+  // ============= AUTH: Email/Password + Google (WebView-safe) =============
+  // Google's OAuth policy blocks sign-in from ANY embedded WebView (Android WebView,
+  // iOS WKWebView, etc) regardless of popup or redirect - this is enforced by Google
+  // itself, not something fixable from JS alone. Email/password below works in any
+  // WebView with zero native code. The Google button will use a native bridge if the
+  // Android host app registers one (see window.AndroidNative below); otherwise it
+  // falls back to the popup flow, which is fine in a normal mobile/desktop browser.
+
+  function showAuthError(msg) {
+    authError.textContent = msg;
+    authError.classList.remove("hidden");
+  }
+  function clearAuthError() {
+    authError.classList.add("hidden");
+    authError.textContent = "";
+  }
+  function friendlyAuthErrorMessage(code) {
+    switch (code) {
+      case "auth/invalid-email": return "That email address looks invalid.";
+      case "auth/user-not-found": return "No account found with that email. Try Sign Up instead.";
+      case "auth/wrong-password":
+      case "auth/invalid-credential": return "Incorrect email or password.";
+      case "auth/email-already-in-use": return "An account already exists for that email. Try Sign In instead.";
+      case "auth/weak-password": return "Password should be at least 6 characters.";
+      default: return "Authentication error. Please try again.";
+    }
+  }
+
+  // Toggle between Sign In / Sign Up modes
+  let authModeIsSignUp = false;
+  authToggleModeBtn.addEventListener("click", () => {
+    authModeIsSignUp = !authModeIsSignUp;
+    emailAuthSubmitBtn.textContent = authModeIsSignUp ? "Create Account" : "Sign In";
+    authToggleModeBtn.innerHTML = authModeIsSignUp
+      ? 'Already have an account? <b>Sign In</b>'
+      : 'Need an account? <b>Sign Up</b>';
+    clearAuthError();
   });
+
+  // Email/password submit - the guaranteed-to-work path inside any WebView
+  emailAuthForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearAuthError();
+    const email = authEmailInput.value.trim();
+    const password = authPasswordInput.value;
+    if (!email || !password) return;
+
+    emailAuthSubmitBtn.disabled = true;
+    try {
+      if (authModeIsSignUp) {
+        await createUserWithEmailAndPassword(auth, email, password);
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+      }
+    } catch (err) {
+      showAuthError(friendlyAuthErrorMessage(err.code));
+    } finally {
+      emailAuthSubmitBtn.disabled = false;
+    }
+  });
+
+  // Google Sign-In: prefer a native bridge (set up by the Android host app) so the
+  // OAuth flow runs outside the WebView; otherwise fall back to a normal popup.
+  loginBtn.addEventListener("click", async () => {
+    clearAuthError();
+    if (window.AndroidNative && typeof window.AndroidNative.requestGoogleSignIn === "function") {
+      window.AndroidNative.requestGoogleSignIn();
+      return;
+    }
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (e) {
+      showAuthError("Google sign-in isn't available in this app view. Please use email sign-in above.");
+    }
+  });
+
+  // Called by the Android host app after it completes native Google Sign-In
+  // (e.g. via Credential Manager) and obtains a Google ID token.
+  window.completeNativeGoogleSignIn = async function (idToken) {
+    clearAuthError();
+    try {
+      const credential = GoogleAuthProvider.credential(idToken);
+      await signInWithCredential(auth, credential);
+    } catch (err) {
+      showAuthError("Native Google sign-in failed: " + err.message);
+    }
+  };
 
   logoutBtn.addEventListener("click", async () => { if(confirm("Disconnect sync session?")) { await signOut(auth); window.location.reload(); } });
 
